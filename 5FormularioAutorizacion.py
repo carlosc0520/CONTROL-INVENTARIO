@@ -381,3 +381,13 @@ class Ui_WizardPage(object):
         self.label_14.setText(_translate("WizardPage", "Área y/u Oficina del Usuario del Bien:"))
         self.label_15.setText(_translate("WizardPage", "Área y/u Oficina del Usuario receptor del Bien:"))
         self.pushButton_3.setText(_translate("WizardPage", "Cancelar"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    Form = QtWidgets.QWidget()
+    ui = Ui_WizardPage()
+    ui.setupUi(Form)
+    Form.show()
+    sys.exit(app.exec_())

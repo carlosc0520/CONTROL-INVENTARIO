@@ -195,3 +195,14 @@ class Ui_WizardPage(object):
         self.pushButton_4.setText(_translate("WizardPage", "Volver"))
         self.label.setText(_translate("WizardPage", "   Datos Desplazamiento"))
         self.pushButton_11.setText(_translate("WizardPage", "Buscar"))
+
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    Form = QtWidgets.QWidget()
+    ui = Ui_WizardPage()
+    ui.setupUi(Form)
+    Form.show()
+    sys.exit(app.exec_())
