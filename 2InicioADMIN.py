@@ -681,3 +681,13 @@ class Ui_WizardPage(object):
         self.label_28.setText(_translate("WizardPage", "Haz click para agregar un nuevo usuario al sistema:"))
         self.label_25.setText(_translate("WizardPage", "Crear nuevo usuario"))
         self.pushButton_4.setText(_translate("WizardPage", "Crear nuevo usuario"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    WizardPage = QtWidgets.QWidget()
+    ui = Ui_WizardPage()
+    ui.setupUi(WizardPage)
+    WizardPage.show()
+    sys.exit(app.exec_())

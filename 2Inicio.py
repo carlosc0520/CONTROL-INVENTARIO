@@ -613,3 +613,13 @@ class Ui_WizardPage(object):
         self.label_7.setText(_translate("WizardPage", "Panel de gestión de inventario con información sobre su estado en almacén y en uso."))
         self.label_8.setText(_translate("WizardPage", "Ubicación"))
         self.label_16.setText(_translate("WizardPage", "En la parte inferior se muestra el panel de gestión de inventario. "))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    Form = QtWidgets.QWidget()
+    ui = Ui_WizardPage()
+    ui.setupUi(Form)
+    Form.show()
+    sys.exit(app.exec_())

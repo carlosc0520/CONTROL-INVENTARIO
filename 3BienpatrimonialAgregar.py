@@ -377,3 +377,13 @@ class Ui_WizardPage(object):
         self.label_18.setText(_translate("WizardPage", "INV. 2021:"))
         self.label_19.setText(_translate("WizardPage", "INV. 2022:"))
         self.label_20.setText(_translate("WizardPage", "INV. 2023:"))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    WizardPage = QtWidgets.QWidget()
+    ui = Ui_WizardPage()
+    ui.setupUi(WizardPage)
+    WizardPage.show()
+    sys.exit(app.exec_())
