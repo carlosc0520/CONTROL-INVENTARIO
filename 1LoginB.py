@@ -520,7 +520,7 @@ class BIEN_PATRIMONIAL(object):
 
 
 # ****************************************
-# *********** FORM BIEN PATRIMONIAL ***********
+# ******** FORM BIEN PATRIMONIAL *********
 # ****************************************
 class FORM_BIEN_PATRIMONIAL(object):
     def setupUi(self, WizardPage, usuario=None, editar=False, datos=None):
