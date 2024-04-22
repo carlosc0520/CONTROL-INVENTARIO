@@ -12,6 +12,17 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 from funciones import *
 from PyQt5.QtWidgets import QMessageBox, QTableView, QWidget
 from PyQt5.QtGui import QIcon, QPixmap
+import re
+from datetime import datetime
+import tkinter as tk
+from tkinter import filedialog
+import base64
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.platypus import Table, TableStyle
+from reportlab.lib import colors
+import os
+import webbrowser
 
 class UIElementsGenerator:
     @staticmethod
@@ -32,6 +43,7 @@ class UIElementsGenerator:
         if valor:
             line_edit.setText(valor)
         line_edit.setDisabled(disabled)
+        line_edit.setStyleSheet("background-color: white;")
         return line_edit
 
     @staticmethod
@@ -71,14 +83,21 @@ class UIElementsGenerator:
     def create_combo_box(parent, geometry, items):
         combo_box = QtWidgets.QComboBox(parent)
         combo_box.setGeometry(geometry)
-        combo_box.addItems(items)
+        combo_box.addItem("Seleccionar", 0)
+        for item in items:
+            combo_box.addItem(item['LABEL'], item['ID'])
+
+        combo_box.setStyleSheet("background-color: white;")
         return combo_box
     
     @staticmethod
-    def create_table_view(parent, geometry, model):
+    def create_table_view(parent, geometry, model = None):
         table_view = QtWidgets.QTableView(parent)
         table_view.setGeometry(geometry)
-        table_view.setModel(model)
+        if model:
+            table_view.setModel(model)
+
+        table_view.setEditTriggers(QTableView.NoEditTriggers)        
         return table_view
     
     @staticmethod
@@ -87,6 +106,16 @@ class UIElementsGenerator:
         spin_box.setGeometry(geometry)
         return spin_box
     
+    @staticmethod
+    def create_check_box(parent, geometry, text, group=None):
+        check_box = QtWidgets.QCheckBox(parent)
+        check_box.setGeometry(geometry)
+        check_box.setText(text)
+        if group:
+            check_box.setCheckable(True)
+            check_box.setChecked(False)
+        return check_box
+
 # ****************************************
 # *************** LOGIN ******************
 # ****************************************
@@ -190,7 +219,10 @@ class Inicio(object):
         self.pushButton = UIElementsGenerator.create_push_button(self.frame_4, QtCore.QRect(50, 40, 231, 51), "Bien Patrimonial", "background-color: rgb(0, 85, 255);color: white;font-weight: bold;font-size: 10pt;")
         self.pushButton.clicked.connect(self.openBienPatrimonial)
         self.pushButton_2 = UIElementsGenerator.create_push_button(WizardPage, QtCore.QRect(330, 290, 231, 51), "Formulario de Autorización \n""Desplazamiento", "background-color: rgb(0, 85, 255);color: white;font-weight: bold;font-size: 10pt;")
+        self.pushButton_2.clicked.connect(self.openDesplazamientoForm)
+        
         self.pushButton_3 = UIElementsGenerator.create_push_button(self.frame_4, QtCore.QRect(170, 100, 231, 51), "Datos Desplazamiento", "background-color: rgb(0, 85, 255);color: white;font-weight: bold;font-size: 10pt;")
+        self.pushButton_3.clicked.connect(self.openDesplazamiento)
         self.pushButton_5 = UIElementsGenerator.create_push_button(self.frame, QtCore.QRect(500, 10, 91, 23), "Cerrar Sesión", "background-color: rgb(170, 22, 56); color: white;")
         self.pushButton_5.clicked.connect(self.cerrarSesion)
 
@@ -230,7 +262,7 @@ class Inicio(object):
         self.label_28 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(50, 430, 321, 51), "Haz click para agregar un nuevo usuario al sistema:")
         self.label_25 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(30, 425, 121, 16), "Crear nuevo usuario", None, "font-weight: bold;") 
         self.pushButton_4 = UIElementsGenerator.create_push_button(WizardPage, QtCore.QRect(310, 440, 121, 31), "Crear nuevo usuario", "background-color: rgb(255, 204, 0);color: white;font-weight: bold;font-size: 7pt;")
-        
+        self.pushButton_4.clicked.connect(self.openNuevoUsuario)
         
         self.label_21.raise_()
         self.frame_4.raise_()
@@ -273,6 +305,33 @@ class Inicio(object):
         # Crear y mostrar la ventana de inicio
         self.window = QtWidgets.QWidget()
         self.ui = BIEN_PATRIMONIAL()
+        self.ui.setupUi(self.window, self.usuario)
+        self.window.show()
+
+    def openNuevoUsuario(self):
+        self.WizardPage.close()
+
+        # Crear y mostrar la ventana de inicio
+        self.window = QtWidgets.QWidget()
+        self.ui = FORM_REGISTER()
+        self.ui.setupUi(self.window, self.usuario)
+        self.window.show()
+
+    def openDesplazamientoForm(self):
+        self.WizardPage.close()
+
+        # Crear y mostrar la ventana de inicio
+        self.window = QtWidgets.QWidget()
+        self.ui = FORM_AUTORIZACION()
+        self.ui.setupUi(self.window, self.usuario)
+        self.window.show()
+
+    def openDesplazamiento(self):
+        self.WizardPage.close()
+
+        # Crear y mostrar la ventana de inicio
+        self.window = QtWidgets.QWidget()
+        self.ui = DATOS_DESPLAZAMIENTO()
         self.ui.setupUi(self.window, self.usuario)
         self.window.show()
 
@@ -326,7 +385,7 @@ class BIEN_PATRIMONIAL(object):
         self.WizardPage = WizardPage
         
         self.model = QtGui.QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["COD.", "DESCRIPCIÓN", "MARCA", "MODELO", "SERIE", "ESTADO", "UBICACION", "DETALLE UBI.", "OBS", "INV 2023", "INV 2022", "INV 2021", "INV 2020", "EDITAR", "ELIMINAR"])
+        self.model.setHorizontalHeaderLabels(["COD.", "DESCRIPCIÓN", "MARCA", "MODELO", "SERIE", "ESTADO", "UBICACION", "DETALLE UBI.", "OBS", "INV 2023", "INV 2022", "INV 2021", "INV 2020", "ESTADO R." "EDITAR", "ELIMINAR"])
         self.model.setHeaderData(0, QtCore.Qt.Horizontal, QtCore.Qt.AlignCenter, QtCore.Qt.TextAlignmentRole)
 
         self.tableView = UIElementsGenerator.create_table_view(WizardPage, QtCore.QRect(30, 220, 581, 201), self.model)
@@ -413,7 +472,7 @@ class BIEN_PATRIMONIAL(object):
         if isinstance(resultado, list):
             # actualizar tabla
             self.model.clear()
-            self.model.setHorizontalHeaderLabels(["COD.", "DESCRIPCIÓN", "MARCA", "MODELO", "SERIE", "ESTADO", "UBICACION", "DETALLE UBI.", "OBS", "INV 2023", "INV 2022", "INV 2021", "INV 2020", "EDITAR", "ELIMINAR"])
+            self.model.setHorizontalHeaderLabels(["COD.", "DESCRIPCIÓN", "MARCA", "MODELO", "SERIE", "ESTADO", "UBICACION", "DETALLE UBI.", "OBS", "INV 2023", "INV 2022", "INV 2021", "INV 2020", "ESTADO R.", "EDITAR", "ELIMINAR"])
             for bien in resultado:
                 row = []
                 for key_index, key in enumerate(bien):
@@ -455,7 +514,7 @@ class BIEN_PATRIMONIAL(object):
     def on_table_view_clicked(self, index):
         row = index.row()
         column = index.column()
-        if column == 14:
+        if column == 15:
             codigo = self.model.item(row, 0).text()
             if not codigo:
                 return
@@ -473,7 +532,7 @@ class BIEN_PATRIMONIAL(object):
             else:
                 QMessageBox.warning(None, "Error", "Error al eliminar el Bien Patrimonial")
 
-        elif column == 13:
+        elif column == 14:
             codigo = self.model.item(row, 0).text()
             if not codigo:
                 return
@@ -502,7 +561,6 @@ class BIEN_PATRIMONIAL(object):
             self.ui.setupUi(self.window, self.usuario, True, collection)
             self.window.show()
             
-
     def retranslateUi(self, WizardPage):
         _translate = QtCore.QCoreApplication.translate
         WizardPage.setWindowTitle(_translate("WizardPage", "BIEN PATRIMONIAL"))
@@ -530,7 +588,7 @@ class FORM_BIEN_PATRIMONIAL(object):
         self.usuario = usuario
         self.editar = editar
         self.datos = datos
-        
+
         self.label_2 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(60, 50, 511, 41), f"Formulario para { 'Editar' if editar else 'Agregar' } un Bien Patrimonial")
         self.label_2.setWordWrap(True)
         
@@ -548,18 +606,24 @@ class FORM_BIEN_PATRIMONIAL(object):
         self.label_7 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(20, 90, 31, 20), "Marca:")
         self.label_8 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(160, 40, 91, 16), "Modelo:")
         self.label_9 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(160, 90, 41, 20), "Serie:")
+        
         self.label_10 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(300, 40, 61, 16), "Estado:")
         self.label_11 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(440, 40, 61, 16), "Ubicación:")
 
+        #LABEL_10 Y 11 SERAN COMBO BOX
+        # self.label_10 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(300, 40, 61, 16), "Estado:")
+        self.comboBox = UIElementsGenerator.create_combo_box(self.frame_3, QtCore.QRect(160, 110, 121, 20), estados())
+        self.comboBox_2 = UIElementsGenerator.create_combo_box(self.frame_3, QtCore.QRect(20, 160, 121, 20), ubicaciones())
+
         self.lineEdit_6 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(440, 60, 121, 20))
         self.lineEdit_7 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(300, 60, 121, 20))
-        self.lineEdit_8 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(160, 110, 121, 20))
-        self.lineEdit_9 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(20, 60, 121, 20), None, True)
+        # self.lineEdit_8 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(160, 110, 121, 20))
+        self.lineEdit_9 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(20, 60, 121, 20))
         self.lineEdit_10 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(20, 110, 121, 20))
         self.lineEdit_11 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(160, 60, 121, 20))
 
         self.label_13 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(20, 140, 71, 20), "Detalle Ubicación:")
-        self.lineEdit_13 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(20, 160, 121, 20))
+        # self.lineEdit_13 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(20, 160, 121, 20))
         self.label_15 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(160, 140, 111, 20), "Observaciones:")
         self.lineEdit_15 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(160, 160, 121, 20))
         self.label_17 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(300, 140, 111, 20), "Inventario 2023:")
@@ -594,12 +658,16 @@ class FORM_BIEN_PATRIMONIAL(object):
 
     def agregarBienPatrimonial(self):
         # validar todos los campos no esten vacios
+        codpatr = self.lineEdit_9.text().upper().strip()
         descripcion = self.lineEdit_11.text().upper().strip() #
         marca = self.lineEdit_7.text().upper().strip() #
         modelo = self.lineEdit_6.text().upper().strip() #
         serie = self.lineEdit_10.text().upper().strip() #
-        estado = self.lineEdit_8.text().upper().strip() #
-        ubicacion = self.lineEdit_13.text().upper().strip() #
+        # estado = self.comboBox.text().upper().strip() #
+        estado = self.comboBox.itemData(self.comboBox.currentIndex())
+        ubicacion = self.comboBox_2.itemData(self.comboBox_2.currentIndex())
+
+        # ubicacion = self.comboBox_2.text().upper().strip() #
         detalle_ubicacion = self.lineEdit_15.text().upper().strip() #
         obs = self.lineEdit_16.text().upper().strip() #
         inv_2023 = self.lineEdit_19.text().upper().strip()
@@ -607,21 +675,30 @@ class FORM_BIEN_PATRIMONIAL(object):
         inv_2021 = self.lineEdit_17.text().upper().strip() #
         inv_2020 = self.lineEdit_12.text().upper().strip() #
 
-        line_edits = [self.lineEdit_11, self.lineEdit_7, self.lineEdit_6, self.lineEdit_10,
-                    self.lineEdit_8, self.lineEdit_13, self.lineEdit_15, self.lineEdit_16,
+        line_edits = [self.lineEdit_9, self.lineEdit_11, self.lineEdit_7, self.lineEdit_6, self.lineEdit_10,
+                    self.comboBox, self.comboBox_2, self.lineEdit_15, self.lineEdit_16,
                     self.lineEdit_19, self.lineEdit_18, self.lineEdit_17, self.lineEdit_12]
 
-        valores = [edit.text().upper().strip() for edit in line_edits]
+
+        valores = [edit.text().upper().strip() if edit not in [self.comboBox, self.comboBox_2] else edit.itemData(edit.currentIndex()) for edit in line_edits]
 
         for edit, valor in zip(line_edits, valores):
-            if not valor:
+            if edit in [self.comboBox, self.comboBox_2]:
+                if valor < 0:
+                    edit.setStyleSheet("border: 1px solid red;")
+                else:
+                    edit.setStyleSheet("")
+            elif not valor:
                 edit.setStyleSheet("border: 1px solid red;")
             else:
-                edit.setStyleSheet("")  
-        
-        if all(valores):
+                edit.setStyleSheet("")
+
+
+        valores_sin_combos = [valor for valor, edit in zip(valores, line_edits) if edit not in [self.comboBox, self.comboBox_2]]
+        if all(valores_sin_combos):
             # guardar en la base de datos
             coleccion = {
+                "CODPATR": codpatr,
                 "IDUSER": self.usuario["ID"],
                 "DESCRIPCIONDELBIEN": descripcion,
                 "MARCA": marca,
@@ -659,8 +736,15 @@ class FORM_BIEN_PATRIMONIAL(object):
         self.lineEdit_7.setText(datos["MARCA"])
         self.lineEdit_6.setText(datos["MODELO"])
         self.lineEdit_10.setText(datos["SERIE"])
-        self.lineEdit_8.setText(datos["ESTADO"])
-        self.lineEdit_13.setText(datos["UBICACION"])
+
+        estado_index = self.comboBox.findData(datos["ESTADO"])
+        if estado_index != -1:
+            self.comboBox.setCurrentIndex(estado_index)
+
+        ubicacion_index = self.comboBox_2.findData(datos["UBICACION"])
+        if ubicacion_index != -1:
+            self.comboBox_2.setCurrentIndex(ubicacion_index)
+        
         self.lineEdit_15.setText(datos["DETALLEUBICACION"])
         self.lineEdit_16.setText(datos["OBS"])
         self.lineEdit_19.setText(datos["INV2023"])
@@ -700,6 +784,784 @@ class FORM_BIEN_PATRIMONIAL(object):
         self.label_18.setText(_translate("WizardPage", "INV. 2021:"))
         self.label_19.setText(_translate("WizardPage", "INV. 2022:"))
         self.label_20.setText(_translate("WizardPage", "INV. 2023:"))
+
+
+# ****************************************
+# ****************************************
+
+# ****************************************
+# ******** FORM REGISTER *********
+# ****************************************
+class FORM_REGISTER(object):
+    def setupUi(self, Form, usuario=None):
+        Form.setObjectName("Form")
+        Form.resize(751, 498)
+        self.usuario = usuario
+        self.Form = Form
+
+        self.label_3 = UIElementsGenerator.create_label(Form, QtCore.QRect(110, 190, 161, 21), "Contraseña")
+        self.label_5 = UIElementsGenerator.create_image_label(Form, QtCore.QRect(270, 120, 221, 41), "Ministerio.jpg")
+        self.label_6 = UIElementsGenerator.create_label(Form, QtCore.QRect(335, 165, 100, 21), "Correo", QtGui.QFont("Microsoft YaHei UI", 9, True), "color: rgb(0, 0, 0);font-weight: bold;font-size: 9pt;")
+
+        self.lineEdit = UIElementsGenerator.create_line_edit(Form, QtCore.QRect(110, 210, 161, 31))
+        self.lineEdit_2 = UIElementsGenerator.create_line_edit(Form, QtCore.QRect(110, 270, 161, 31))
+        
+        self.frame = UIElementsGenerator.create_frame(Form, QtCore.QRect(20, 70, 711, 361), "background-color: rgb(255, 107, 39);", QtWidgets.QFrame.WinPanel, QtWidgets.QFrame.Raised)
+        self.frame_2 = UIElementsGenerator.create_frame(Form, QtCore.QRect(80, 140, 611, 221), "background-color: rgb(255, 255, 255);", QtWidgets.QFrame.WinPanel, QtWidgets.QFrame.Raised)
+
+        self.label_radio1 = UIElementsGenerator.create_label(self.frame_2, QtCore.QRect(430, 138, 161, 21), "Administrador")
+        self.radioButton = QtWidgets.QRadioButton(self.frame_2)
+        self.radioButton.setGeometry(QtCore.QRect(410, 140, 20, 20))
+        self.radioButton.setObjectName("radioButton")
+
+        self.radioButton_2 = QtWidgets.QRadioButton(self.frame_2)
+        self.radioButton_2.setGeometry(QtCore.QRect(510, 140, 20, 20))
+        self.radioButton_2.setObjectName("radioButton_2")
+        self.label_radio2 = UIElementsGenerator.create_label(self.frame_2, QtCore.QRect(530, 138, 161, 21), "Locador")
+
+        self.label_7 = UIElementsGenerator.create_label(self.frame_2, QtCore.QRect(410, 120, 161, 21), "Tipo de usuario:")
+        self.label_4 = UIElementsGenerator.create_label(self.frame_2, QtCore.QRect(30, 110, 161, 21), "Correo Laboral:")
+        
+        self.pushButton = UIElementsGenerator.create_push_button(self.frame_2, QtCore.QRect(240, 180, 121, 23), "Crear  usuario", "background-color: rgb(0, 85, 255);color: white;font-weight: bold;font-size: 9pt;")
+        self.pushButton.clicked.connect(self.crearUsuario)
+
+        self.lineEdit_3 = UIElementsGenerator.create_line_edit(self.frame_2, QtCore.QRect(220, 70, 161, 31))
+        self.lineEdit_4 = UIElementsGenerator.create_line_edit(self.frame_2, QtCore.QRect(410, 70, 161, 31))
+        self.lineEdit_5 = UIElementsGenerator.create_line_edit(self.frame_2, QtCore.QRect(220, 130, 161, 31))
+        self.lineEdit_5.setEchoMode(QtWidgets.QLineEdit.Password)
+
+        self.label_10 = UIElementsGenerator.create_label(self.frame_2, QtCore.QRect(220, 110, 161, 21), "Contraseña:")
+
+        self.label_radio1.raise_()
+        self.label_radio2.raise_()
+        self.label_10.raise_()
+        self.radioButton.raise_()
+        self.radioButton_2.raise_()
+        self.label_7.raise_()
+        self.label_4.raise_()
+        self.pushButton.raise_()
+        self.lineEdit_3.raise_()
+        self.lineEdit_4.raise_()
+        self.lineEdit_5.raise_()
+            
+        self.frame_3 = UIElementsGenerator.create_frame(Form, QtCore.QRect(0, 70, 31, 361), "background-color: rgb(255, 255, 255);", QtWidgets.QFrame.WinPanel, QtWidgets.QFrame.Raised)
+    
+        self.line = UIElementsGenerator.create_line_edit(Form, QtCore.QRect(10, 50, 16, 271))
+
+        self.label = UIElementsGenerator.create_image_label(Form, QtCore.QRect(-20, -50, 951, 681), "ImagePrincipal.jpeg")
+        self.label_8 = UIElementsGenerator.create_label(Form, QtCore.QRect(300, 190, 161, 21), "Nombre y Apellidos:")
+        self.label_9 = UIElementsGenerator.create_label(Form, QtCore.QRect(490, 190, 161, 21), "DNI:")
+        
+        self.label.raise_()
+        self.frame.raise_()
+        self.frame_2.raise_()
+        self.label_5.raise_()
+        self.label_8.raise_()
+        self.label_9.raise_()
+        self.lineEdit.raise_()
+        self.lineEdit_2.raise_()
+        self.label_6.raise_()
+        self.label_3.raise_()
+        self.frame_3.raise_()
+
+        # SI SE DA CLICK AL BOTON DE CERRAR VENTANA, DEBE CERRARSE Y ABRIR LA VENTANA DE INICIO
+        self.Form.closeEvent = self.closeEvent
+
+
+        self.retranslateUi(Form)
+        QtCore.QMetaObject.connectSlotsByName(Form)
+
+    def retranslateUi(self, Form):
+        _translate = QtCore.QCoreApplication.translate
+        Form.setWindowTitle(_translate("Form", "Form"))
+        self.label_3.setText(_translate("Form", "Nombre de Usuario:"))
+        self.label_6.setText(_translate("Form", "Nuevo Usuario"))
+        self.label_radio1.setText(_translate("Form", "Administrador"))
+        self.label_radio2.setText(_translate("Form", "Locador"))
+        self.label_7.setText(_translate("Form", "Tipo de usuario:"))
+        self.label_4.setText(_translate("Form", "Correo Laboral:"))
+        self.pushButton.setText(_translate("Form", "Crear  usuario"))
+        self.label_10.setText(_translate("Form", "Contraseña:"))
+        self.label_8.setText(_translate("Form", "Nombre y Apellidos:"))
+        self.label_9.setText(_translate("Form", "DNI:"))
+
+    def crearUsuario(self):
+        # validar todos los campos no esten vacios
+        nombre = self.lineEdit_3.text().strip()
+        dni = self.lineEdit_4.text().strip()
+        correo = self.lineEdit_2.text().strip()
+        usuario = self.lineEdit.text().strip()
+        password = self.lineEdit_5.text().strip()
+
+        # obtener checkbox
+        tipo_usuario = -1
+        if self.radioButton.isChecked():
+            tipo_usuario = 1
+        elif self.radioButton_2.isChecked():
+            tipo_usuario = 2
+
+        if tipo_usuario < 0:
+            QMessageBox.warning(None, "Error", "Seleccione el tipo de usuario")
+            return
+
+        # contraseña minimo 6 caracteres
+        if len(password) < 6:
+            QMessageBox.warning(None, "Error", "La contraseña debe tener al menos 6 caracteres")
+            return
+        
+        # dni 8 caracteres
+        if len(dni) != 8:
+            QMessageBox.warning(None, "Error", "El DNI debe tener 8 caracteres")
+            return
+        
+        # regex para validar correo
+        if not re.match(r"[^@]+@[^@]+\.[^@]+", correo):
+            QMessageBox.warning(None, "Error", "Correo inválido")
+            return
+
+        line_edits = [self.lineEdit_3, self.lineEdit_4, self.lineEdit_5, self.lineEdit, self.lineEdit_2]
+        valores = [edit.text().strip() for edit in line_edits]
+
+        for edit, valor in zip(line_edits, valores):
+            if not valor:
+                edit.setStyleSheet("border: 1px solid red;")
+            else:
+                edit.setStyleSheet("")
+        
+        if all(valores):
+            # guardar en la base de datos
+            coleccion = {
+                "NOMBREUSUARIO": usuario.upper(),
+                "NOMBRESYAPELLIDOS": nombre,
+                "DNI": dni,
+                "PASSWORD": password,
+                "CORREOLABORAL": correo,
+                "IDROL": tipo_usuario,
+                "IDCREADOR": self.usuario["ID"]
+            }
+
+            resultado = addUsuario(coleccion)
+            if isinstance(resultado, int):
+                if(resultado == -1):
+                    QMessageBox.warning(None, "Error", "El usuario ya existe")
+                    return
+                
+                QMessageBox.information(None, "Usuario", "Se insertó correctamente el usuario " + usuario.upper())
+                self.cancelar()
+            
+            else:
+                QMessageBox.warning(None, "Error", resultado)
+
+        else:
+            QMessageBox.warning(None, "Error", "Todos los campos son obligatorios")
+
+    def cancelar(self):
+        # destroy window y abrir inicio
+        self.Form.close()
+
+        # Crear y mostrar la ventana de inicio
+        self.window = QtWidgets.QWidget()
+        self.ui = Inicio()
+        self.ui.setupUi(self.window, self.usuario)
+        self.window.show()
+
+    def closeEvent(self, event):
+        self.cancelar() 
+# ****************************************
+# ****************************************
+
+# ****************************************
+# ********** FORM AUTORIZACION ***********
+# ****************************************
+class FORM_AUTORIZACION(object):
+    def setupUi(self, WizardPage, usuario=None):
+        WizardPage.setObjectName("WizardPage")
+        WizardPage.resize(635, 584)
+        self.WizardPage = WizardPage
+        self.usuario = usuario
+
+        # model con columnas N° Y FECHA
+        self.model = QtGui.QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(["N°", "FECHA"])
+        self.maximo = obtenerIdDatosdesplazamiento()
+        self.fechaActual = datetime.now()
+        self.fechaActual = self.fechaActual.strftime("%d/%m/%Y")
+
+        self.model.appendRow([QtGui.QStandardItem(str(self.maximo)), QtGui.QStandardItem(self.fechaActual)])
+        # centrar texto
+        self.model.item(0, 0).setTextAlignment(QtCore.Qt.AlignCenter)
+        self.model.item(0, 1).setTextAlignment(QtCore.Qt.AlignCenter)
+
+        self.tableView = UIElementsGenerator.create_table_view(WizardPage, QtCore.QRect(480, 55, 141, 50), self.model)
+        self.tableView.setColumnWidth(0, 50)
+        self.tableView.setColumnWidth(1, 89)
+        self.tableView.horizontalHeader().setFont(QtGui.QFont("Arial", 7, 1)) 
+        self.tableView.setFont(QtGui.QFont("Arial", 7, 1))
+        self.tableView.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.tableView.verticalHeader().setVisible(False)
+
+
+        self.label_2 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(60, 60, 331, 41), "En la parte inferior se muestra una tabla en la que se encuentra el registro de todos los Bienes Patrimoniales. Incluye el estado del inventario total junto con información sobre ubicación actual.")
+        self.label_2.setWordWrap(True)
+        self.pushButton = UIElementsGenerator.create_push_button(WizardPage, QtCore.QRect(200, 530, 111, 31), "Agregar Bien Patrimonial", "background-color: rgb(0, 85, 255); color: white;font-weight: bold;font-size: 10pt;")
+        self.pushButton.clicked.connect(self.guardarAutorizacion)
+
+        self.frame = UIElementsGenerator.create_frame(WizardPage, QtCore.QRect(0, 0, 641, 51), "background-color: rgb(243, 243, 243);", QtWidgets.QFrame.Panel, QtWidgets.QFrame.Raised)
+        self.label = UIElementsGenerator.create_label(self.frame, QtCore.QRect(20, 10, 451, 31), "Bien Patrimonial", QtGui.QFont("Microsoft YaHei UI", 11, True), "color: rgb(0, 0, 0);font-weight: bold;font-size: 10pt;")
+        self.frame_2 = UIElementsGenerator.create_frame(WizardPage, QtCore.QRect(30, 120, 581, 101), "", QtWidgets.QFrame.Box, QtWidgets.QFrame.Raised)
+
+        self.checkBox = QtWidgets.QCheckBox(self.frame_2)
+        self.checkBox.setGeometry(QtCore.QRect(70, 40, 70, 17))
+        self.checkBox.setObjectName("checkBox")
+
+        self.checkBox_2 = QtWidgets.QCheckBox(self.frame_2)
+        self.checkBox_2.setGeometry(QtCore.QRect(70, 70, 70, 21))
+        self.checkBox_2.setObjectName("checkBox_2")
+
+        self.checkBox_3 = QtWidgets.QCheckBox(self.frame_2)
+        self.checkBox_3.setGeometry(QtCore.QRect(240, 40, 70, 21))
+        self.checkBox_3.setObjectName("checkBox_3")
+        
+        self.checkBox_4 = QtWidgets.QCheckBox(self.frame_2)
+        self.checkBox_4.setGeometry(QtCore.QRect(240, 70, 101, 21))
+        self.checkBox_4.setObjectName("checkBox_4")
+        
+        self.checkBox_5 = QtWidgets.QCheckBox(self.frame_2)
+        self.checkBox_5.setGeometry(QtCore.QRect(410, 40, 81, 21))
+        self.checkBox_5.setObjectName("checkBox_5")
+        
+        self.label_3 = QtWidgets.QLabel(self.frame_2)
+        self.label_3.setGeometry(QtCore.QRect(20, 10, 141, 16))
+        font = QtGui.QFont()
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_3.setFont(font)
+        self.label_3.setWordWrap(True)
+        self.label_3.setObjectName("label_3")
+
+        self.frame_3 = UIElementsGenerator.create_frame(WizardPage, QtCore.QRect(30, 340, 581, 151), "background-color: rgb(243, 243, 243);", QtWidgets.QFrame.Box, QtWidgets.QFrame.Raised)
+        self.label_4 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(20, 10, 111, 16), "Datos Generales", None, "font-weight: bold;font-size: 8pt;")
+        self.label_6 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(20, 40, 91, 16), "Descripción:")
+        self.label_7 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(20, 90, 31, 20), "Marca:")
+        self.label_8 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(160, 40, 91, 16), "Modelo:")
+        self.label_9 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(160, 90, 41, 20), "Serie:")
+        self.label_10 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(300, 40, 61, 16), "Estado:")
+        self.label_11 = UIElementsGenerator.create_label(self.frame_3, QtCore.QRect(440, 40, 61, 16), "Ubicación:")
+
+        self.lineEdit_6 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(440, 60, 121, 20), None, True)
+        self.lineEdit_7 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(300, 60, 121, 20), None, True)
+        self.lineEdit_8 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(160, 60, 121, 20), None, True)
+        self.combo_patr = UIElementsGenerator.create_combo_box(self.frame_3, QtCore.QRect(20, 60, 121, 20), obtenerListCodigoBienPatrimonial())
+        self.combo_patr.currentIndexChanged.connect(self.actualizarDatos)
+
+        self.comboBox = UIElementsGenerator.create_combo_box(self.frame_3, QtCore.QRect(160, 110, 121, 20), estados())
+        self.comboBox.setEnabled(False)
+        
+        self.lineEdit_11 = UIElementsGenerator.create_line_edit(self.frame_3, QtCore.QRect(20, 110, 121, 20), None, True)
+
+        self.label_12 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(50, 230, 241, 20), "Detalle Ubicación:")
+        self.lineEdit_12 = UIElementsGenerator.create_line_edit(WizardPage, QtCore.QRect(50, 250, 261, 21))
+        self.label_13 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(50, 280, 241, 20), "Observaciones:")
+        self.lineEdit_13 = UIElementsGenerator.create_line_edit(WizardPage, QtCore.QRect(50, 300, 261, 21))
+        self.label_14 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(330, 230, 241, 20), "INV. 2020:")
+        self.lineEdit_14 = UIElementsGenerator.create_line_edit(WizardPage, QtCore.QRect(330, 250, 261, 21))
+        self.label_15 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(330, 280, 241, 20), "INV. 2021:")
+        self.lineEdit_15 = UIElementsGenerator.create_line_edit(WizardPage, QtCore.QRect(330, 300, 261, 21))
+
+        self.frame_4 = UIElementsGenerator.create_frame(WizardPage, QtCore.QRect(10, 110, 611, 401), "", QtWidgets.QFrame.Box, QtWidgets.QFrame.Raised)
+        self.pushButton_3 = UIElementsGenerator.create_push_button(WizardPage, QtCore.QRect(330, 530, 111, 31), "Guardar", "background-color: rgb(243, 0, 0); color: white;font-weight: bold;font-size: 10pt;")
+        self.pushButton_3.clicked.connect(self.cancelar)
+        
+        self.label_16 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(0, 2, 631, 581))
+
+        self.label_16.raise_()
+        self.frame.raise_()
+        self.frame_4.raise_()
+        self.frame_3.raise_()
+        self.frame_2.raise_()
+        self.label_2.raise_()
+        self.pushButton.raise_()
+        self.label_12.raise_()
+        self.lineEdit_12.raise_()
+        self.label_13.raise_()
+        self.lineEdit_13.raise_()
+        self.label_14.raise_()
+        self.lineEdit_14.raise_()
+        self.label_15.raise_()
+        self.lineEdit_15.raise_()
+        self.pushButton_3.raise_()
+        self.tableView.raise_()
+
+        self.retranslateUi(WizardPage)
+        QtCore.QMetaObject.connectSlotsByName(WizardPage)
+
+    def actualizarDatos(self):
+        codpatr = self.combo_patr.itemData(self.combo_patr.currentIndex())
+        self.limpiarCampos()
+        if codpatr:
+            coleccion = obtenerBien(codpatr)
+            self.lineEdit_11.setText(coleccion["SERIE"])
+            self.lineEdit_8.setText(coleccion["DESCRIPCIONDELBIEN"])
+            self.lineEdit_7.setText(coleccion["MARCA"])
+            self.lineEdit_6.setText(coleccion["MODELO"])
+            self.comboBox.setCurrentIndex(self.comboBox.findData(coleccion["ESTADO"]))
+
+
+    def limpiarCampos(self):
+        self.lineEdit_11.clear()
+        self.lineEdit_8.clear()
+        self.lineEdit_7.clear()
+        self.lineEdit_6.clear()
+        self.comboBox.setCurrentIndex(0)
+
+
+    def guardarAutorizacion(self):
+        interno = self.checkBox.isChecked()
+        externo = self.checkBox_2.isChecked()
+        disposicion = self.checkBox_3.isChecked()
+        mantenimiento = self.checkBox_4.isChecked()
+        ressignacion = self.checkBox_5.isChecked()
+
+        usuarioBien = self.lineEdit_12.text().strip()
+        receptorBien = self.lineEdit_13.text().strip()
+        areaBien = self.lineEdit_14.text().strip()
+        areaReceptor = self.lineEdit_15.text().strip()
+        
+        codpatr = self.combo_patr.itemData(self.combo_patr.currentIndex())
+
+        if (codpatr == None or codpatr <= 0):
+            QMessageBox.warning(None, "Error", "Seleccione un bien patrimonial")
+            return
+
+        # validas que todos los text no esten vacios
+        line_edits = [self.lineEdit_11, self.lineEdit_8, self.lineEdit_7, self.lineEdit_6, self.lineEdit_12, self.lineEdit_13, self.lineEdit_14, self.lineEdit_15]
+        valores = [edit.text().strip() for edit in line_edits]
+
+        for edit, valor in zip(line_edits, valores):
+            if not valor:
+                edit.setStyleSheet("border: 1px solid red;")
+            else:
+                edit.setStyleSheet("")
+
+        if all(valores):
+            coleccion_des = {
+                "INTERNO": 1 if interno else 0,
+                "EXTERNO": 1 if externo else 0,
+                "DISPOSICION": 1 if disposicion else 0,
+                "MANTENIMIENTO": 1 if mantenimiento else 0,
+                "REASIGNACION": 1 if ressignacion else 0,
+                "DUBIEN": usuarioBien,
+                "DUABIEN": areaBien,
+                "DRBIEN": receptorBien,
+                "DRABIEN": areaReceptor,
+                "ACTAFIRMADA": "",
+                "IDUSER": self.usuario["ID"],
+                "IDBIEN": codpatr   
+            }
+
+            resultado = insertarDatosDesplazamiento(coleccion_des)
+            if isinstance(resultado, int):
+                QMessageBox.information(None, "Autorización", "Se insertó correctamente con el código " + str(codpatr))
+                self.cancelar()
+            else:
+                QMessageBox.warning(None, "Error", resultado)
+
+
+    def cancelar(self):
+        self.WizardPage.close()
+
+        # abrir inicio
+        self.window = QtWidgets.QWidget()
+        self.ui = Inicio()
+        self.ui.setupUi(self.window, self.usuario)
+        self.window.show()
+
+    def retranslateUi(self, WizardPage):
+        _translate = QtCore.QCoreApplication.translate
+        WizardPage.setWindowTitle(_translate("WizardPage", "Autorización de Desplazamiento de Bienes Muebles Patrimoniales"))
+        self.label_2.setText(_translate("WizardPage", "Llena el formulario con los datos correctos. El N° de formulario se colocará de manera automatica."))
+        self.pushButton.setText(_translate("WizardPage", "Guardar"))
+        self.label.setText(_translate("WizardPage", "Autorización de Desplazamiento de Bienes Muebles Patrimoniales"))
+        self.checkBox.setText(_translate("WizardPage", "Interno"))
+        self.checkBox_2.setText(_translate("WizardPage", "Externo"))
+        self.checkBox_3.setText(_translate("WizardPage", "Disposición"))
+        self.checkBox_4.setText(_translate("WizardPage", "Mantenimiento"))
+        self.checkBox_5.setText(_translate("WizardPage", "Ressignación"))
+        self.label_3.setText(_translate("WizardPage", "Tipo de Desplazamiento"))
+        self.label_4.setText(_translate("WizardPage", "Relación de bienes"))
+        self.label_6.setText(_translate("WizardPage", "Código Patrimonial:"))
+        self.label_7.setText(_translate("WizardPage", "Serie:"))
+        self.label_8.setText(_translate("WizardPage", "Descripción:"))
+        self.label_9.setText(_translate("WizardPage", "Estado:"))
+        self.label_10.setText(_translate("WizardPage", "Marca:"))
+        self.label_11.setText(_translate("WizardPage", "Modelo:"))
+        self.label_12.setText(_translate("WizardPage", "Datos del Usuario del Bien: (Apellidos y Nombres)"))
+        self.label_13.setText(_translate("WizardPage", "Datos del Receptor del Bien: (Apellidos y Nombres)"))
+        self.label_14.setText(_translate("WizardPage", "Área y/u Oficina del Usuario del Bien:"))
+        self.label_15.setText(_translate("WizardPage", "Área y/u Oficina del Usuario receptor del Bien:"))
+        self.pushButton_3.setText(_translate("WizardPage", "Cancelar"))
+
+
+# ****************************************
+# ****************************************
+
+# ****************************************
+# ********* DATOS DESPLAZAMIENTO *********
+# ****************************************
+class DATOS_DESPLAZAMIENTO(object):
+    def setupUi(self, WizardPage, usuario=None):
+        WizardPage.setObjectName("WizardPage")
+        WizardPage.resize(640, 480)
+        self.WizardPage = WizardPage
+        self.usuario = usuario
+        
+        self.model = QtGui.QStandardItemModel()
+        self.model.setHorizontalHeaderLabels(["N°", "FECHA", "CGD. PATRIMONIAL", "INTERNO", "EXTERNO", "DISPOSICION", "MANTENIMIENTO", "REASIGNACION", "DATOS DEL USUARIO DEL BIEN", "ÁREA Y/O OFICINA DEL USUARIO DEL BIEN", "DATOS DEL RECEPTOR DEL BIEN", "ÁREA Y/O OFICINA DEL USUARIO RECEPTOR DEL BIEN", "DESCARGAR", "SUBIR"])
+        self.model.setHeaderData(0, QtCore.Qt.Horizontal, QtCore.Qt.AlignCenter, QtCore.Qt.TextAlignmentRole)
+
+        self.tableView = UIElementsGenerator.create_table_view(WizardPage,QtCore.QRect(30, 210, 581, 201), self.model)
+        self.tableView.setColumnWidth(0, 70)
+        self.tableView.setColumnWidth(1, 200)
+        self.ListarAll()
+
+        self.spinBox = UIElementsGenerator.create_spin_box(WizardPage, QtCore.QRect(70, 150, 31, 22))
+        self.label_2 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(60,40, 531, 50), "N°")
+        self.label_2.setWordWrap(True)
+        self.label_3 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(50, 100, 61, 16), "FECHA")
+        self.label_5 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(50, 153, 200, 16), "N°")
+
+        self.pushButton_4 = UIElementsGenerator.create_push_button(WizardPage, QtCore.QRect(510, 10, 75, 23), "Cancelar", "background-color: rgb(170, 22, 56);color: white;font-weight: bold;font-size: 10pt;")
+        self.pushButton_4.clicked.connect(self.cancelar)
+
+        self.frame = UIElementsGenerator.create_frame(WizardPage, QtCore.QRect(0, 0, 641, 41), "background-color: rgb(243, 243, 243);", QtWidgets.QFrame.Panel, QtWidgets.QFrame.Raised)   
+
+        self.label = UIElementsGenerator.create_label(self.frame, QtCore.QRect(10, 10, 451, 20), "Datos de Desplazamiento de Bienes Muebles Patrimoniales", QtGui.QFont("Microsoft YaHei UI", 11, True), "color: rgb(0, 0, 0);font-weight: bold;font-size: 10pt;")
+
+        self.frame_2 = UIElementsGenerator.create_frame(WizardPage, QtCore.QRect(30, 90, 581, 101), "", QtWidgets.QFrame.Box, QtWidgets.QFrame.Raised)
+        self.label_6 = UIElementsGenerator.create_label(self.frame_2, QtCore.QRect(10, 10, 566, 20), "")
+
+        self.pushButton_11 = UIElementsGenerator.create_push_button(self.frame_2, QtCore.QRect(170, 30, 75, 21), "Buscar", "background-color: rgb(85, 170, 0);color: white;font-weight: bold;font-size: 9pt;")
+        self.pushButton_11.clicked.connect(self.ListarAll)
+        self.label_7 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(0, 2, 641, 481), "")
+        self.lineEdit = UIElementsGenerator.create_line_edit(WizardPage, QtCore.QRect(50, 120, 141, 20))
+
+        self.label_7.raise_()
+        self.frame_2.raise_()
+        self.label_5.raise_()
+        self.tableView.raise_()
+        self.spinBox.raise_()
+        self.label_2.raise_()
+        self.label_3.raise_()
+        self.frame.raise_()
+        self.pushButton_4.raise_()
+        self.lineEdit.raise_()
+
+        self.retranslateUi(WizardPage)
+        QtCore.QMetaObject.connectSlotsByName(WizardPage)
+
+    def cancelar(self):
+        self.WizardPage.close()
+
+        # abrir inicio
+        self.window = QtWidgets.QWidget()
+        self.ui = Inicio()
+        self.ui.setupUi(self.window, self.usuario)
+        self.window.show()
+
+    def retranslateUi(self, WizardPage):
+        _translate = QtCore.QCoreApplication.translate
+        WizardPage.setWindowTitle(_translate("WizardPage", "DATOS DESPLAZAMIENTO"))
+        self.label_2.setText(_translate("WizardPage", "En la parte inferior se muestra una tabla en la que se encuentra el registro de las autorizaciones de desplazamiento solicitadas. "))
+        self.label_3.setText(_translate("WizardPage", "N° Acta:"))
+        self.label_5.setText(_translate("WizardPage", "Ver \t  filas"))
+        self.pushButton_4.setText(_translate("WizardPage", "Volver"))
+        self.label.setText(_translate("WizardPage", "   Datos Desplazamiento"))
+        self.pushButton_11.setText(_translate("WizardPage", "Buscar"))
+
+    def ListarAll(self):
+        top = 10
+        if hasattr(self, 'spinBox'):
+            top = self.spinBox.value()
+            if top == 0:
+                top = 10
+
+        # codigo patrimonial
+        codigo = None
+        if hasattr(self, 'lineEdit'):
+            codigo = self.lineEdit.text().strip()
+
+        resultado = listarDatosDesplazamiento(top, codigo)
+        if isinstance(resultado, list):
+            # actualizar tabla
+            self.model.clear()
+            self.model.setHorizontalHeaderLabels(["N°", "FECHA", "CGD. PATRIMONIAL", "INTERNO", "EXTERNO", "DISPOSICION", "MANTENIMIENTO", "REASIGNACION", "DATOS DEL USUARIO DEL BIEN", "ÁREA Y/O OFICINA DEL USUARIO DEL BIEN", "DATOS DEL RECEPTOR DEL BIEN", "ÁREA Y/O OFICINA DEL USUARIO RECEPTOR DEL BIEN", "DESCARGAR", "SUBIR"])
+            for bien in resultado:
+                row = []
+                for key_index, key in enumerate(bien):
+                    item = QtGui.QStandardItem(str(bien[key]))
+                    
+                    if key_index in [0,1,2,3,4,5,6,7]: 
+                        item.setTextAlignment(QtCore.Qt.AlignCenter) 
+
+                    
+                    row.append(item)
+                
+            
+                # Agregar ícono de edición
+                edit_icon = QIcon(QPixmap("total.jpeg"))
+                edit_item = QtGui.QStandardItem()
+                edit_item.setIcon(edit_icon)
+                edit_item.setTextAlignment(QtCore.Qt.AlignCenter)
+                edit_item.setFlags(QtCore.Qt.ItemIsEnabled)
+                row.append(edit_item)
+
+                # AGREGAR IMAGEN ELIMINAR
+                delete_icon = QIcon(QPixmap("total.jpeg"))
+                delete_item = QtGui.QStandardItem()
+                delete_item.setIcon(delete_icon)
+                delete_item.setTextAlignment(QtCore.Qt.AlignCenter)
+                delete_item.setFlags(QtCore.Qt.ItemIsEnabled)
+                row.append(delete_item)
+
+                self.model.appendRow(row)
+
+            self.tableView.setModel(self.model)
+            # evento click
+            self.tableView.clicked.connect(lambda index: self.on_table_view_clicked(index))
+        else:
+            QMessageBox.warning(None, "Error", "Error al listar los Datos de Desplazamiento")
+            return
+
+    def on_table_view_clicked(self, index):
+        row = index.row()
+        column = index.column()
+
+        id = self.model.item(row, 0).text()
+        if(column == 12):
+            # descargar pdf
+            resultado = descargarDatosDesplazamiento(id)
+            if(isinstance(resultado, str)):
+                #validar si esta nulo o vacio
+                if not resultado:
+                    self.descargarPDF(id)
+                    return
+                
+
+                # guardar archivo
+                filepath = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF files", "*.pdf")])
+                if filepath:
+                    with open(filepath, "wb") as file:
+                        file.write(base64.b64decode(resultado))
+
+                    QMessageBox.information(None, "Descargar", "Se descargó correctamente el archivo")
+            else:
+                QMessageBox.warning(None, "Error", resultado)
+
+        if column == 13:
+            filepath = filedialog.askopenfilename()
+            if filepath:
+                # validar que sea pdf
+                if filepath.endswith(".pdf"):
+                    # preguntar si desea subir el archivo
+                    respuesta = QMessageBox.question(None, "Subir", "¿Desea subir el archivo?", QMessageBox.Yes | QMessageBox.No)
+                    if respuesta == QMessageBox.Yes:
+                        # convertir archivo en base64
+                        with open(filepath, "rb") as file:
+                            base64_pdf = base64.b64encode(file.read()).decode("utf-8")
+                            # subir archivo
+                            resultado = actualizarDatosDesplazamiento(id, base64_pdf)
+                            if(isinstance(resultado, int)):
+                                QMessageBox.information(None, "Subir", "Se subió correctamente el archivo")
+                                self.ListarAll()
+                            else:
+                                QMessageBox.warning(None, "Error", resultado)
+
+                else:
+                    QMessageBox.warning(None, "Error", "Solo se permiten archivos PDF")
+
+    def descargarPDF(self, id):
+        respuesta = QMessageBox.question(None, "Descargar", "¿Desea descargar el archivo?", QMessageBox.Yes | QMessageBox.No)
+        
+        if respuesta == QMessageBox.No:
+            return
+            
+
+        datos = obtenerDatoDesplazamientoBien(id)
+        
+        # crear PDF
+        c = canvas.Canvas("REPORTE.pdf", pagesize=letter)
+        # PONER IMAGEN
+        c.drawImage("Ministerio.jpg", 20, 720, width=300, height=50)
+
+        c.setFont("Helvetica", 7)
+        c.drawString(355, 745, "Decenio de la Igualdad de oportunidades para mujeres y hombres")
+        c.drawString(380, 735, "Año del fortalecimiento de la Soberanía Nacional")
+
+        # agregar tabla
+        table = Table([
+            ["N°", "FECHA"],
+            [datos["ID"], datos["FECHA"]]
+        ])
+
+
+        # Aplicar estilo a la tabla
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (1, 0), colors.gray),
+            ('TEXTCOLOR', (0, 0), (1, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (1, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (1, 0), 'Helvetica-Bold'),
+            ('BACKGROUND', (0, 1), (1, 1), colors.white),
+            ('TEXTCOLOR', (0, 1), (1, 1), colors.black),
+            ('ALIGN', (0, 1), (1, 1), 'CENTER'),
+            ('FONTNAME', (0, 1), (1, 1), 'Helvetica'),
+        ])
+
+        table.setStyle(style)
+        # # Dibujar la tabla en el lienzo
+        table.wrapOn(c, 100, 0)
+        table.drawOn(c, 50, 640)
+
+        c.setFont("Helvetica-Bold", 10)
+        c.drawCentredString(300, 690, "AUTORIZACIÓN DE DESPLAZAMIENTO DE BIENES MUEBLES PATRIMONIALES")
+
+        c.setFont("Helvetica", 10)
+        c.drawString(50, 620, "I. Tipo de Desplazamiento:")
+
+
+        c.setFont("Helvetica", 9)
+        c.drawString(70, 600, "Interno:")
+        c.drawString(220, 600, "Externo:")
+        c.drawString(350, 600, "Disposición:")
+        c.drawString(70, 580, "Mantenimiento:")
+        c.drawString(220, 580, "Reasignación:")
+
+        # poner check si esta marcado
+        c.setFont("Helvetica", 9)
+        c.drawString(152, 602, "X" if datos["INTERNO"] == 1 else "")
+        c.drawString(302, 602, "X" if datos["EXTERNO"] == 1 else "")
+        c.drawString(452, 602, "X" if datos["DISPOSICION"] == 1 else "")
+        c.drawString(152, 582, "X" if datos["MANTENIMIENTO"] == 1 else "")
+        c.drawString(302, 582, "X" if datos["REASIGNACION"] == 1 else "")
+
+        # crear cuadraditos para los check
+        c.rect(150, 600, 10, 10)
+        c.rect(300, 600, 10, 10)
+        c.rect(450, 600, 10, 10)
+        c.rect(150, 580, 10, 10)
+        c.rect(300, 580, 10, 10)
+
+
+        # COLCOCAR II. Datos del Usuario del Bien: (Apellidos y Nombres)
+        c.setFont("Helvetica", 10)
+        c.drawString(50, 550, "II. Datos del Usuario del Bien: (Apellidos y Nombres)")
+
+
+        # COLCOAR nombre y una linea debajo
+        c.setFont("Helvetica", 9)
+        c.drawString(70, 530, datos["DUBIEN"])
+        c.line(70, 525, 400, 525)
+
+        # COLCOAR III. Área y/u Oficina del Usuario del Bien:
+        c.setFont("Helvetica", 10)
+        c.drawString(50, 510, "III. Área y/u Oficina del Usuario del Bien:")
+        c.setFont("Helvetica", 9)
+        c.drawString(70, 490, datos["DUABIEN"])
+        c.line(70, 485, 400, 485)
+
+        # COLOCAR IV. Datos del Usuario receptor del Bien: (Apellidos y Nombres)
+        c.setFont("Helvetica", 10)
+        c.drawString(50, 470, "IV. Datos del Usuario receptor del Bien: (Apellidos y Nombres)")
+        c.setFont("Helvetica", 9)
+        c.drawString(70, 450, datos["DRBIEN"])
+        c.line(70, 445, 400, 445)
+
+        # COLOCAR V. Área y/u Oficina del Usuario receptor del Bien:
+        c.setFont("Helvetica", 10)
+        c.drawString(50, 430, "V. Área y/u Oficina del Usuario receptor del Bien:")
+        c.setFont("Helvetica", 9)
+        c.drawString(70, 410, datos["DRABIEN"])
+        c.line(70, 405, 400, 405)
+
+        # COLCOAR VI. Relación de bienes:
+        c.setFont("Helvetica", 10)
+        c.drawString(50, 390, "VI. Relación de bienes:")
+
+        bien = {
+            "N° Ítem": 1,
+            "Cod": datos["CODPATR"],
+            "Descripción": datos["DESCRIPCIONDELBIEN"],
+            "Marca": datos["MARCA"],
+            "Modelo": datos["MODELO"],
+            "Serie": datos["SERIE"],
+            "Estado": datos["ESTADO"]
+        }
+
+        table = Table([
+            ["N° Ítem", "Cod", "Descripción", "Marca", "Modelo", "Serie", "Estado"],
+            [bien["N° Ítem"], bien["Cod"], bien["Descripción"], bien["Marca"], bien["Modelo"], bien["Serie"], bien["Estado"]]
+        ])
+
+        style = TableStyle([
+            ('BACKGROUND', (0, 0), (6, 0), colors.gray),
+            ('TEXTCOLOR', (0, 0), (6, 0), colors.whitesmoke),
+            ('ALIGN', (0, 0), (6, 0), 'CENTER'),
+            ('FONTNAME', (0, 0), (6, 0), 'Helvetica-Bold'),
+            ('BACKGROUND', (0, 1), (6, 1), colors.white),
+            ('TEXTCOLOR', (0, 1), (6, 1), colors.black),
+            ('ALIGN', (0, 1), (6, 1), 'CENTER'),
+            ('FONTNAME', (0, 1), (6, 1), 'Helvetica'),
+        ])
+
+        table.setStyle(style)
+        table.wrapOn(c, 100, 0)
+        table.drawOn(c, 50, 340)
+
+
+        # COLCOAR VII. Firmas:
+        c.setFont("Helvetica", 10)
+        c.drawString(50, 320, "VII. Firmas:")
+        
+        c.rect(50, 200, 130, 100)
+        c.setFont("Helvetica", 9)
+        c.drawString(80, 210, "Usuario del Bien")
+        c.line(60, 220, 170, 220)
+
+        c.rect(181, 200, 130, 100)
+        c.setFont("Helvetica", 9)
+        c.drawString(197, 210, "Funcionario que autoriza")
+        c.line(190, 220, 300, 220)
+
+        c.rect(312, 200, 130, 100)
+        c.setFont("Helvetica", 7)
+        c.drawString(325, 210, "Verificador - Unidad de Patrimonio")
+        c.line(320, 220, 434, 220)
+
+        c.rect(443, 200, 130, 100)
+        c.setFont("Helvetica", 9)
+        c.drawString(457, 210, "Usuario receptor del Bien")
+        c.line(450, 220, 564, 220)
+
+        c.setFont("Helvetica", 5)
+        c.setFillColorRGB(0.5, 0.5, 0.5)
+        c.drawString(50, 190, "DIRECTIVA N° 059 • MINSA - V.02 “DIRECTIVA ADMINISTRATIVA PARA LA ASIGNACION EN USO Y CONTROL DE BIENES MUEBLES PATRIMONIALES DEL MINISTERIO DE SALUD”")
+
+        #DESCARGAR PDF
+        nombre_archivo = "REPORTE.pdf"
+        c.save()
+        ruta_completa = os.path.realpath(nombre_archivo)
+        ruta_guardado = filedialog.asksaveasfilename(initialfile=nombre_archivo, defaultextension=".pdf")
+
+        if ruta_guardado:
+            os.rename(ruta_completa, ruta_guardado)
+
+    
+# ****************************************
+# ****************************************
+
+
+# ****************************************
+# ******** VENTANA SUBIR ARCHIVO *********
+# ****************************************
 
 
 # ****************************************
