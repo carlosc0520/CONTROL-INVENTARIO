@@ -87,7 +87,7 @@ def estados():
 def allBienesPatrimoniales(top, codigo, ubicacion):
     try:
         cursor = conexion.cursor()
-        cadena = "SELECT ID, IDUSER, DESCRIPCIONDELBIEN, MARCA, MODELO, SERIE, ESTADO, UBICACION, DETALLEUBICACION, OBS, INV2023, INV2022, INV2021, INV2020, CESTDO "
+        cadena = "SELECT ID, CODPATR, IDUSER, DESCRIPCIONDELBIEN, MARCA, MODELO, SERIE, ESTADO, UBICACION, DETALLEUBICACION, OBS, INV2023, INV2022, INV2021, INV2020, CESTDO "
         cadena += "FROM bienespatrimoniales WHERE 1=1 "
         if not codigo in [None, ""]:
             cadena += "AND ID = {0} ".format(codigo)
@@ -105,21 +105,22 @@ def allBienesPatrimoniales(top, codigo, ubicacion):
         for bien in bienes:
             bienes_dict.append({
                 "ID": bien[0],
-                "IDUSER": bien[1],
-                "DESCRIPCIONDELBIEN": bien[2],
-                "MARCA": bien[3],
-                "MODELO": bien[4],
-                "SERIE": bien[5],
-                "ESTADO": bien[6],
-                "UBICACION": bien[7],
-                "DETALLEUBICACION": bien[8],
-                "OBS": bien[9],
-                "INV2023": bien[10],
-                "INV2022": bien[11],
-                "INV2021": bien[12],
-                "INV2020": bien[13],
-                "CESTDO": "Activo" if bien[14] == "A" else "Inactivo"
-            })
+                "CODPATR": bien[1],
+                "IDUSER": bien[2],
+                "DESCRIPCIONDELBIEN": bien[3],
+                "MARCA": bien[4],
+                "MODELO": bien[5],
+                "SERIE": bien[6],
+                "ESTADO": bien[7],
+                "UBICACION": bien[8],
+                "DETALLEUBICACION": bien[9],
+                "OBS": bien[10],
+                "INV2023": bien[11],
+                "INV2022": bien[12],
+                "INV2021": bien[13],
+                "INV2020": bien[14],
+                "CESTDO": "Activo" if bien[15] == "A" else "Inactivo"
+        })
 
         cursor.close()
         return bienes_dict
@@ -154,7 +155,7 @@ def updateBienPatrimonial(coleccion):
         cadena = "UPDATE bienespatrimoniales SET "
         
         valores = []
-        for key in ['DESCRIPCIONDELBIEN', 'MARCA', 'MODELO', 'SERIE', 'ESTADO', 'UBICACION', 'DETALLEUBICACION', 'OBS', 'INV2023', 'INV2022', 'INV2021', 'INV2020']:
+        for key in ['CODPATR', 'DESCRIPCIONDELBIEN', 'MARCA', 'MODELO', 'SERIE', 'ESTADO', 'UBICACION', 'DETALLEUBICACION', 'OBS', 'INV2023', 'INV2022', 'INV2021', 'INV2020']:
             valor = coleccion.get(key, '') 
             valores.append("{0} = '{1}'".format(key, valor)) 
         

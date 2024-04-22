@@ -385,7 +385,7 @@ class BIEN_PATRIMONIAL(object):
         self.WizardPage = WizardPage
         
         self.model = QtGui.QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["COD.", "DESCRIPCIÓN", "MARCA", "MODELO", "SERIE", "ESTADO", "UBICACION", "DETALLE UBI.", "OBS", "INV 2023", "INV 2022", "INV 2021", "INV 2020", "ESTADO R." "EDITAR", "ELIMINAR"])
+        self.model.setHorizontalHeaderLabels(["ID", "COD.", "DESCRIPCIÓN", "MARCA", "MODELO", "SERIE", "ESTADO", "UBICACION", "DETALLE UBI.", "OBS", "INV 2023", "INV 2022", "INV 2021", "INV 2020", "ESTADO R." "EDITAR", "ELIMINAR"])
         self.model.setHeaderData(0, QtCore.Qt.Horizontal, QtCore.Qt.AlignCenter, QtCore.Qt.TextAlignmentRole)
 
         self.tableView = UIElementsGenerator.create_table_view(WizardPage, QtCore.QRect(30, 220, 581, 201), self.model)
@@ -472,16 +472,17 @@ class BIEN_PATRIMONIAL(object):
         if isinstance(resultado, list):
             # actualizar tabla
             self.model.clear()
-            self.model.setHorizontalHeaderLabels(["COD.", "DESCRIPCIÓN", "MARCA", "MODELO", "SERIE", "ESTADO", "UBICACION", "DETALLE UBI.", "OBS", "INV 2023", "INV 2022", "INV 2021", "INV 2020", "ESTADO R.", "EDITAR", "ELIMINAR"])
+            self.model.setHorizontalHeaderLabels(["ID", "COD.", "DESCRIPCIÓN", "MARCA", "MODELO", "SERIE", "ESTADO", "UBICACION", "DETALLE UBI.", "OBS", "INV 2023", "INV 2022", "INV 2021", "INV 2020", "ESTADO R.", "EDITAR", "ELIMINAR"])
             for bien in resultado:
                 row = []
                 for key_index, key in enumerate(bien):
+
                     item = QtGui.QStandardItem(str(bien[key]))
                     
                     if key_index in [0, 9, 10, 11, 12,13,14]: 
                         item.setTextAlignment(QtCore.Qt.AlignCenter) 
 
-                    if key_index != 1:
+                    if(key_index != 2):
                         row.append(item)
                 
             
@@ -514,7 +515,7 @@ class BIEN_PATRIMONIAL(object):
     def on_table_view_clicked(self, index):
         row = index.row()
         column = index.column()
-        if column == 15:
+        if column == 16:
             codigo = self.model.item(row, 0).text()
             if not codigo:
                 return
@@ -532,7 +533,7 @@ class BIEN_PATRIMONIAL(object):
             else:
                 QMessageBox.warning(None, "Error", "Error al eliminar el Bien Patrimonial")
 
-        elif column == 14:
+        elif column == 15:
             codigo = self.model.item(row, 0).text()
             if not codigo:
                 return
@@ -540,18 +541,19 @@ class BIEN_PATRIMONIAL(object):
             # generar coleccion
             collection = {
                 "ID": self.model.item(row, 0).text(),
-                "DESCRIPCIONDELBIEN": self.model.item(row, 1).text(),
-                "MARCA": self.model.item(row, 2).text(),
-                "MODELO": self.model.item(row, 3).text(),
-                "SERIE": self.model.item(row, 4).text(),
-                "ESTADO": self.model.item(row, 5).text(),
-                "UBICACION": self.model.item(row, 6).text(),
-                "DETALLEUBICACION": self.model.item(row, 7).text(),
-                "OBS": self.model.item(row, 8).text(),
-                "INV2023": self.model.item(row, 9).text(),
-                "INV2022": self.model.item(row, 10).text(),
-                "INV2021": self.model.item(row, 11).text(),
-                "INV2020": self.model.item(row, 12).text(),
+                "CODPATR": self.model.item(row, 1).text(),
+                "DESCRIPCIONDELBIEN": self.model.item(row, 2).text(),
+                "MARCA": self.model.item(row,3).text(),
+                "MODELO": self.model.item(row,4).text(),
+                "SERIE": self.model.item(row, 5).text(),
+                "ESTADO": self.model.item(row, 6).text(),
+                "UBICACION": self.model.item(row, 7).text(),
+                "DETALLEUBICACION": self.model.item(row, 8).text(),
+                "OBS": self.model.item(row, 9).text(),
+                "INV2023": self.model.item(row, 10).text(),
+                "INV2022": self.model.item(row, 11).text(),
+                "INV2021": self.model.item(row, 12).text(),
+                "INV2020": self.model.item(row, 13).text(),
             }
 
             # Cerrar ventana actual, abrir FORM_BIEN_PATRIMONIAL
@@ -644,6 +646,7 @@ class FORM_BIEN_PATRIMONIAL(object):
         self.label_16 = UIElementsGenerator.create_label(WizardPage, QtCore.QRect(0, 0, 631, 521))
 
         if editar:
+            self.id = datos["ID"]
             self.actualizarDatos(datos)
 
         self.label_16.raise_()
@@ -715,7 +718,7 @@ class FORM_BIEN_PATRIMONIAL(object):
             }
 
             if self.editar:
-                coleccion["ID"] = self.datos["ID"]
+                coleccion["ID"] = self.id
                 resultado = updateBienPatrimonial(coleccion)
             else:
                 resultado = addBienPatrimonial(coleccion)
@@ -751,7 +754,7 @@ class FORM_BIEN_PATRIMONIAL(object):
         self.lineEdit_18.setText(datos["INV2022"])
         self.lineEdit_17.setText(datos["INV2021"])
         self.lineEdit_12.setText(datos["INV2020"])
-        self.lineEdit_9.setText(datos["ID"])
+        self.lineEdit_9.setText(datos["CODPATR"])
 
     def cancelar(self):
         self.WizardPage.close()
