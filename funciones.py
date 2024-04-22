@@ -242,12 +242,16 @@ def obtenerBien(id):
 def rankings():
     try:
         cursor = conexion.cursor()
-        cadena = "SELECT (SELECT COUNT(Z.ID) FROM bienespatrimoniales Z WHERE Z.CESTDO = 'A') TOTAL,  "
-        cadena += "(SELECT COUNT(B.ID) FROM bienespatrimoniales B WHERE B.ESTADO = 1) OPERATIVO, "
-        cadena += "(SELECT COUNT(D.ID) FROM bienespatrimoniales D WHERE D.ESTADO = 2) BAJA, "
-        cadena += "(SELECT COUNT(F.ID) FROM bienespatrimoniales F WHERE F.UBICACION = 1) ALMACEN, "
-        cadena += "(SELECT COUNT(K.ID) FROM bienespatrimoniales K WHERE K.UBICACION != 1) USO "
-        cadena += "FROM bienespatrimoniales A"
+        cadena = """
+        SELECT 
+            (SELECT COUNT(Z.ID) FROM bienespatrimoniales Z WHERE Z.CESTDO = 'A') AS TOTAL,
+            SUM(CASE WHEN A.ESTADO = 1 THEN 1 ELSE 0 END) AS OPERATIVO,
+            SUM(CASE WHEN A.ESTADO = 2 THEN 1 ELSE 0 END) AS BAJA,
+            SUM(CASE WHEN A.UBICACION = 1 THEN 1 ELSE 0 END) AS ALMACEN,
+            SUM(CASE WHEN A.UBICACION != 1 THEN 1 ELSE 0 END) AS USO
+        FROM 
+            bienespatrimoniales A
+        """
 
         cursor.execute(cadena)
         ranking = cursor.fetchone()
