@@ -783,7 +783,7 @@ class FORM_BIEN_PATRIMONIAL(object):
             self.lineEdit_7.setReadOnly(True)
             self.lineEdit_6.setReadOnly(True)
             self.lineEdit_10.setReadOnly(True)
-            self.comboBox.setDisabled(True)
+            # self.comboBox.setDisabled(True)
             self.lineEdit_16.setReadOnly(True)
             self.lineEdit_19.setReadOnly(True)
             self.lineEdit_18.setReadOnly(True)

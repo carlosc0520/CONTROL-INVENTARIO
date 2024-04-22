@@ -240,30 +240,9 @@ def obtenerBien(id):
         }
 
 def rankings():
-    #     SELECT 
-    # 	COUNT(A.ID) TOTAL,
-    #     (
-    # 		SELECT COUNT(ESTADO) FROM controldeinventario.bienespatrimoniales B
-    #         WHERE B.ESTADO = 1
-    #     ) OPERATIVO,
-    # 	(
-    # 		SELECT COUNT(ESTADO) FROM controldeinventario.bienespatrimoniales D
-    #         WHERE D.ESTADO = 2
-    #     ) BAJA,
-    #     (
-    # 		SELECT COUNT(ESTADO) FROM controldeinventario.bienespatrimoniales F
-    #         WHERE F.UBICACION = 1
-    #     ) ALMACEN,
-    #     (
-    # 		SELECT COUNT(ESTADO) FROM controldeinventario.bienespatrimoniales F
-    #         WHERE F.UBICACION != 1
-    #     ) USO
-
-    # FROM controldeinventario.bienespatrimoniales A
-
     try:
         cursor = conexion.cursor()
-        cadena = "SELECT COUNT(A.ID) TOTAL, "
+        cadena = "(SELECT COUNT(ESTADO) FROM bienespatrimoniales Z WHERE Z.CESTDO = 'A') TOTAL,  "
         cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales B WHERE B.ESTADO = 1) OPERATIVO, "
         cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales D WHERE D.ESTADO = 2) BAJA, "
         cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales F WHERE F.UBICACION = 1) ALMACEN, "
