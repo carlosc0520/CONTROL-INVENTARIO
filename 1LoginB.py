@@ -696,16 +696,17 @@ class FORM_BIEN_PATRIMONIAL(object):
         inv_2021 = self.lineEdit_17.text().upper().strip() #
         inv_2020 = self.lineEdit_12.text().upper().strip() #
 
-        line_edits = [self.lineEdit_9, self.lineEdit_11, self.lineEdit_7, self.lineEdit_6, self.lineEdit_10,
-                    self.comboBox, self.comboBox_2, self.lineEdit_15, self.lineEdit_16,
-                    self.lineEdit_19, self.lineEdit_18, self.lineEdit_17, self.lineEdit_12]
+        line_edits = [self.lineEdit_9, self.lineEdit_11, self.comboBox_2 ]
+        if(ubicacion < 1):
+            QMessageBox.warning(None, "Error", "Seleccione una ubicación")
+            return
 
 
-        valores = [edit.text().upper().strip() if edit not in [self.comboBox, self.comboBox_2] else edit.itemData(edit.currentIndex()) for edit in line_edits]
+        valores = [edit.text().upper().strip() if edit not in [self.comboBox_2] else edit.itemData(edit.currentIndex()) for edit in line_edits]
 
         for edit, valor in zip(line_edits, valores):
-            if edit in [self.comboBox, self.comboBox_2]:
-                if valor < 0:
+            if edit in [self.comboBox_2]:
+                if valor < 1:
                     edit.setStyleSheet("border: 1px solid red;")
                 else:
                     edit.setStyleSheet("")
@@ -715,7 +716,7 @@ class FORM_BIEN_PATRIMONIAL(object):
                 edit.setStyleSheet("")
 
 
-        valores_sin_combos = [valor for valor, edit in zip(valores, line_edits) if edit not in [self.comboBox, self.comboBox_2]]
+        valores_sin_combos = [valor for valor, edit in zip(valores, line_edits) if edit not in [self.comboBox_2]]
         if all(valores_sin_combos):
             # guardar en la base de datos
             coleccion = {
