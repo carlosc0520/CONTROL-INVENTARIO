@@ -201,6 +201,7 @@ class Inicio(object):
         WizardPage.setObjectName("WizardPage")
         WizardPage.resize(640, 481)
         self.usuario = usuario
+        self.rankings = rankings()
 
         self.frame = UIElementsGenerator.create_frame(WizardPage, QtCore.QRect(0, 0, 641, 41), "background-color: rgb(243, 243, 243);", QtWidgets.QFrame.Panel, QtWidgets.QFrame.Raised)
         self.frame_2 = UIElementsGenerator.create_frame(WizardPage, QtCore.QRect(40, 170, 271, 61), "background-color: rgb(243, 243, 243);", QtWidgets.QFrame.Box, QtWidgets.QFrame.Raised)
@@ -295,6 +296,20 @@ class Inicio(object):
             self.label_28.raise_()
             self.pushButton_4.raise_()
 
+        self.plainTextEdit.setText(str(self.rankings["TOTAL"]))
+        self.plainTextEdit.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.plainTextEdit_2.setText(str(self.rankings["OPERATIVO"]))
+        self.plainTextEdit_2.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.plainTextEdit_3.setText(str(self.rankings["BAJA"]))
+        self.plainTextEdit_3.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.plainTextEdit_6.setText(str(self.rankings["ALMACEN"]))
+        self.plainTextEdit_6.setAlignment(QtCore.Qt.AlignCenter)
+
+        self.plainTextEdit_7.setText(str(self.rankings["USO"]))
+        self.plainTextEdit_7.setAlignment(QtCore.Qt.AlignCenter)
 
         self.retranslateUi(WizardPage)
         QtCore.QMetaObject.connectSlotsByName(WizardPage)
@@ -476,8 +491,10 @@ class BIEN_PATRIMONIAL(object):
             for bien in resultado:
                 row = []
                 for key_index, key in enumerate(bien):
+                    valor = bien[key]
+                    valor = "" if valor == None or valor == "None" or not valor else valor
 
-                    item = QtGui.QStandardItem(str(bien[key]))
+                    item = QtGui.QStandardItem(str(valor))
                     
                     if key_index in [0, 9, 10, 11, 12,13,14]: 
                         item.setTextAlignment(QtCore.Qt.AlignCenter) 
@@ -649,6 +666,7 @@ class FORM_BIEN_PATRIMONIAL(object):
             self.id = datos["ID"]
             self.actualizarDatos(datos)
 
+        self.bloquearIsAdmin()
         self.label_16.raise_()
         self.frame.raise_()
         self.label_2.raise_()
@@ -735,16 +753,18 @@ class FORM_BIEN_PATRIMONIAL(object):
                 QMessageBox.warning(None, "Error", resultado)
 
     def actualizarDatos(self, datos):
+        datos2 = obtenerBienPatrimonial(datos["ID"])
+
         self.lineEdit_11.setText(datos["DESCRIPCIONDELBIEN"])
         self.lineEdit_7.setText(datos["MARCA"])
         self.lineEdit_6.setText(datos["MODELO"])
         self.lineEdit_10.setText(datos["SERIE"])
 
-        estado_index = self.comboBox.findData(datos["ESTADO"])
+        estado_index = self.comboBox.findData(datos2["ESTADO"])
         if estado_index != -1:
             self.comboBox.setCurrentIndex(estado_index)
 
-        ubicacion_index = self.comboBox_2.findData(datos["UBICACION"])
+        ubicacion_index = self.comboBox_2.findData(datos2["UBICACION"])
         if ubicacion_index != -1:
             self.comboBox_2.setCurrentIndex(ubicacion_index)
         
@@ -756,6 +776,20 @@ class FORM_BIEN_PATRIMONIAL(object):
         self.lineEdit_12.setText(datos["INV2020"])
         self.lineEdit_9.setText(datos["CODPATR"])
 
+    def bloquearIsAdmin(self):
+        if self.usuario["ROL"] != 1 and self.editar:
+            self.lineEdit_11.setReadOnly(True)
+            self.lineEdit_7.setReadOnly(True)
+            self.lineEdit_6.setReadOnly(True)
+            self.lineEdit_10.setReadOnly(True)
+            self.comboBox.setDisabled(True)
+            self.lineEdit_16.setReadOnly(True)
+            self.lineEdit_19.setReadOnly(True)
+            self.lineEdit_18.setReadOnly(True)
+            self.lineEdit_17.setReadOnly(True)
+            self.lineEdit_12.setReadOnly(True)
+            self.lineEdit_9.setReadOnly(True)
+            
     def cancelar(self):
         self.WizardPage.close()
 
@@ -767,7 +801,7 @@ class FORM_BIEN_PATRIMONIAL(object):
         
     def retranslateUi(self, WizardPage):
         _translate = QtCore.QCoreApplication.translate
-        WizardPage.setWindowTitle(_translate("WizardPage", "WizardPage"))
+        WizardPage.setWindowTitle(_translate("WizardPage", "FORMULARIO BIEN PATRIMONIAL"))
         self.label_2.setText(_translate("WizardPage", f"Llena el formulario con los datos del bien mueble patrimonial que desee { 'editar' if self.editar else 'agregar' }")) 
         self.pushButton.setText(_translate("WizardPage", "Guardar"))
         self.pushButton_2.setText(_translate("WizardPage", "Cancelar"))
@@ -876,7 +910,7 @@ class FORM_REGISTER(object):
 
     def retranslateUi(self, Form):
         _translate = QtCore.QCoreApplication.translate
-        Form.setWindowTitle(_translate("Form", "Form"))
+        Form.setWindowTitle(_translate("Form", "REGISTRAR USUARIO"))
         self.label_3.setText(_translate("Form", "Nombre de Usuario:"))
         self.label_6.setText(_translate("Form", "Nuevo Usuario"))
         self.label_radio1.setText(_translate("Form", "Administrador"))
@@ -1306,8 +1340,8 @@ class DATOS_DESPLAZAMIENTO(object):
                     if key_index in [0,1,2,3,4,5,6,7]: 
                         item.setTextAlignment(QtCore.Qt.AlignCenter) 
 
-                    
-                    row.append(item)
+                    if key_index < 12:
+                        row.append(item)
                 
             
                 # Agregar ícono de edición
@@ -1316,6 +1350,7 @@ class DATOS_DESPLAZAMIENTO(object):
                 edit_item.setIcon(edit_icon)
                 edit_item.setTextAlignment(QtCore.Qt.AlignCenter)
                 edit_item.setFlags(QtCore.Qt.ItemIsEnabled)
+                edit_item.setText(f'REPORTE-{bien["CODPATR"]}')
                 row.append(edit_item)
 
                 # AGREGAR IMAGEN ELIMINAR
@@ -1324,6 +1359,7 @@ class DATOS_DESPLAZAMIENTO(object):
                 delete_item.setIcon(delete_icon)
                 delete_item.setTextAlignment(QtCore.Qt.AlignCenter)
                 delete_item.setFlags(QtCore.Qt.ItemIsEnabled)
+                delete_item.setText(bien["NOMBRE"])
                 row.append(delete_item)
 
                 self.model.appendRow(row)
@@ -1341,53 +1377,80 @@ class DATOS_DESPLAZAMIENTO(object):
 
         id = self.model.item(row, 0).text()
         if(column == 12):
-            # descargar pdf
-            resultado = descargarDatosDesplazamiento(id)
-            if(isinstance(resultado, str)):
-                #validar si esta nulo o vacio
-                if not resultado:
-                    self.descargarPDF(id)
-                    return
-                
-
-                # pregunar si desea generar o descargar
-                respuesta = QMessageBox.question(None, "Descargar", "¿Desea generar el archivo?", QMessageBox.Yes | QMessageBox.No)
-                if respuesta == QMessageBox.Yes:
-                    self.descargarPDF(id)
-                    return
-
-                # guardar archivo
-                filepath = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF files", "*.pdf")])
-                if filepath:
-                    with open(filepath, "wb") as file:
-                        file.write(base64.b64decode(resultado))
-
-                    QMessageBox.information(None, "Descargar", "Se descargó correctamente el archivo")
-            else:
-                QMessageBox.warning(None, "Error", resultado)
-
+            self.descargarPDF(id)
+            return
+            
         if column == 13:
-            filepath = filedialog.askopenfilename()
-            if filepath:
-                # validar que sea pdf
-                if filepath.endswith(".pdf"):
-                    # preguntar si desea subir el archivo
-                    respuesta = QMessageBox.question(None, "Subir", "¿Desea subir el archivo?", QMessageBox.Yes | QMessageBox.No)
-                    if respuesta == QMessageBox.Yes:
-                        # convertir archivo en base64
-                        with open(filepath, "rb") as file:
-                            base64_pdf = base64.b64encode(file.read()).decode("utf-8")
-                            # subir archivo
-                            resultado = actualizarDatosDesplazamiento(id, base64_pdf)
-                            if(isinstance(resultado, int)):
-                                QMessageBox.information(None, "Subir", "Se subió correctamente el archivo")
-                                self.ListarAll()
-                            else:
-                                QMessageBox.warning(None, "Error", resultado)
+            # VALIDAR SI EXISTE EL NOMBRE DELA RCHIVO en la misma tabla
+            archivo = self.model.item(row, 12).text()
+                
+            if archivo:
+                # Preguntar si desea descgar presione yes, para subir presione no
+                respuesta = QMessageBox.question(None, "Subir", "Si desea descargar presione (YES), para subir presione (NO)", QMessageBox.Yes | QMessageBox.No)
+                if respuesta == QMessageBox.Yes:
+                    resultado = descargarDatosDesplazamiento(id)
+                    if(isinstance(resultado, str)):
+                        # guardar archivo
+                        filepath = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF files", "*.pdf")], initialfile=archivo)
+                        if filepath:
+                            with open(filepath, "wb") as file:
+                                file.write(base64.b64decode(resultado))
 
+                            QMessageBox.information(None, "Descargar", "Se descargó correctamente el archivo")
+                    else:
+                        QMessageBox.warning(None, "Error", resultado)                    
+                    
+                    return
                 else:
-                    QMessageBox.warning(None, "Error", "Solo se permiten archivos PDF")
+                    filepath = filedialog.askopenfilename()
+                    if filepath:
+                        # validar que sea pdf
+                        if filepath.endswith(".pdf"):
+                            nombre = os.path.basename(filepath)
 
+                            # preguntar si desea subir el archivo
+                            respuesta = QMessageBox.question(None, "Subir", "¿Desea subir el archivo?", QMessageBox.Yes | QMessageBox.No)
+                            if respuesta == QMessageBox.Yes:
+                                # convertir archivo en base64
+                                with open(filepath, "rb") as file:
+                                    base64_pdf = base64.b64encode(file.read()).decode("utf-8")
+                                    # subir archivo
+                                    resultado = actualizarDatosDesplazamiento(id, base64_pdf, nombre)
+                                    if(isinstance(resultado, int)):
+                                        QMessageBox.information(None, "Subir", "Se subió correctamente el archivo")
+                                        self.ListarAll()
+                                    else:
+                                        QMessageBox.warning(None, "Error", resultado)
+
+                        else:
+                            QMessageBox.warning(None, "Error", "Solo se permiten archivos PDF")
+
+                return
+            else:
+                filepath = filedialog.askopenfilename()
+                if filepath:
+                # validar que sea pdf
+                    if filepath.endswith(".pdf"):
+                        nombre = os.path.basename(filepath)
+
+                        # preguntar si desea subir el archivo
+                        respuesta = QMessageBox.question(None, "Subir", "¿Desea subir el archivo?", QMessageBox.Yes | QMessageBox.No)
+                        if respuesta == QMessageBox.Yes:
+                            # convertir archivo en base64
+                            with open(filepath, "rb") as file:
+                                base64_pdf = base64.b64encode(file.read()).decode("utf-8")
+                                # subir archivo
+                                resultado = actualizarDatosDesplazamiento(id, base64_pdf, nombre)
+                                if(isinstance(resultado, int)):
+                                    QMessageBox.information(None, "Subir", "Se subió correctamente el archivo")
+                                    self.ListarAll()
+                                else:
+                                    QMessageBox.warning(None, "Error", resultado)
+
+                    else:
+                        QMessageBox.warning(None, "Error", "Solo se permiten archivos PDF")
+                return
+            
     def descargarPDF(self, id):
         respuesta = QMessageBox.question(None, "Descargar", "¿Desea descargar el archivo?", QMessageBox.Yes | QMessageBox.No)
         
@@ -1396,9 +1459,9 @@ class DATOS_DESPLAZAMIENTO(object):
             
 
         datos = obtenerDatoDesplazamientoBien(id)
-        
+        valorCODPATR = datos["CODPATR"]    
         # crear PDF
-        c = canvas.Canvas("REPORTE.pdf", pagesize=letter)
+        c = canvas.Canvas(f"REPORTE-{valorCODPATR}.pdf", pagesize=letter)
         # PONER IMAGEN
         c.drawImage("Ministerio.jpg", 20, 720, width=300, height=50)
 
@@ -1446,11 +1509,11 @@ class DATOS_DESPLAZAMIENTO(object):
 
         # poner check si esta marcado
         c.setFont("Helvetica", 9)
-        c.drawString(152, 602, "X" if datos["INTERNO"] == 1 else "")
-        c.drawString(302, 602, "X" if datos["EXTERNO"] == 1 else "")
-        c.drawString(452, 602, "X" if datos["DISPOSICION"] == 1 else "")
-        c.drawString(152, 582, "X" if datos["MANTENIMIENTO"] == 1 else "")
-        c.drawString(302, 582, "X" if datos["REASIGNACION"] == 1 else "")
+        c.drawString(152, 602, datos["INTERNO"] )
+        c.drawString(302, 602, datos["EXTERNO"] )
+        c.drawString(452, 602, datos["DISPOSICION"] )
+        c.drawString(152, 582, datos["MANTENIMIENTO"] )
+        c.drawString(302, 582, datos["REASIGNACION"] )
 
         # crear cuadraditos para los check
         c.rect(150, 600, 10, 10)
@@ -1555,13 +1618,20 @@ class DATOS_DESPLAZAMIENTO(object):
         c.drawString(50, 190, "DIRECTIVA N° 059 • MINSA - V.02 “DIRECTIVA ADMINISTRATIVA PARA LA ASIGNACION EN USO Y CONTROL DE BIENES MUEBLES PATRIMONIALES DEL MINISTERIO DE SALUD”")
 
         #DESCARGAR PDF
-        nombre_archivo = "REPORTE.pdf"
+        nombre_archivo = f"REPORTE-{valorCODPATR}.pdf"
         c.save()
         ruta_completa = os.path.realpath(nombre_archivo)
         ruta_guardado = filedialog.asksaveasfilename(initialfile=nombre_archivo, defaultextension=".pdf")
 
         if ruta_guardado:
-            os.rename(ruta_completa, ruta_guardado)
+            try:
+                # Si el archivo ya existe en la ubicación seleccionada, reemplazarlo
+                if os.path.exists(ruta_guardado):
+                    os.remove(ruta_guardado)
+                os.rename(ruta_completa, ruta_guardado)
+                QMessageBox.information(None, "Descargar", "Se descargó correctamente el archivo")
+            except Exception as e:
+                QMessageBox.warning(None, "Error", f"No se pudo guardar el archivo: {e}")
 
     
 # ****************************************

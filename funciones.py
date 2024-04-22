@@ -87,8 +87,13 @@ def estados():
 def allBienesPatrimoniales(top, codigo, ubicacion):
     try:
         cursor = conexion.cursor()
-        cadena = "SELECT ID, CODPATR, IDUSER, DESCRIPCIONDELBIEN, MARCA, MODELO, SERIE, ESTADO, UBICACION, DETALLEUBICACION, OBS, INV2023, INV2022, INV2021, INV2020, CESTDO "
-        cadena += "FROM bienespatrimoniales WHERE 1=1 "
+        cadena = "SELECT A.ID, A.CODPATR, A.IDUSER, A.DESCRIPCIONDELBIEN, A.MARCA, A.MODELO, A.SERIE, B.NOMBRE ESTADO, "
+        cadena += "C.DESCRIPCION UBICACION, A.DETALLEUBICACION, A.OBS, A.INV2023, A.INV2022, A.INV2021, A.INV2020, A.CESTDO "
+        cadena += "FROM bienespatrimoniales A "
+        cadena += "LEFT JOIN estados_bienes B ON B.ID = A.ESTADO "
+        cadena += "LEFT JOIN ubicaciones_bienes C ON C.ID = A.UBICACION "        
+        cadena += "WHERE 1=1 "
+
         if not codigo in [None, ""]:
             cadena += "AND ID = {0} ".format(codigo)
         if not ubicacion in [None, ""]:
@@ -127,6 +132,24 @@ def allBienesPatrimoniales(top, codigo, ubicacion):
 
     except Exception as e:
         return "Error: {0}".format(e)
+
+def obtenerBienPatrimonial(id):
+    try:
+        cursor = conexion.cursor()
+        cursor.execute("SELECT ESTADO, UBICACION FROM bienespatrimoniales WHERE ID = {0}".format(id))
+        bien = cursor.fetchone()
+        cursor.close()
+        return {
+            "ID": id,
+            "ESTADO": bien[0],
+            "UBICACION": bien[1]
+        }
+    except Exception as e:
+        return {
+            "ID": 0,
+            "ESTADO": "",
+            "UBICACION": ""
+        }
 
 def addBienPatrimonial(coleccion):
     try:
@@ -216,6 +239,55 @@ def obtenerBien(id):
             "ESTADO": "",
         }
 
+def rankings():
+    #     SELECT 
+    # 	COUNT(A.ID) TOTAL,
+    #     (
+    # 		SELECT COUNT(ESTADO) FROM controldeinventario.bienespatrimoniales B
+    #         WHERE B.ESTADO = 1
+    #     ) OPERATIVO,
+    # 	(
+    # 		SELECT COUNT(ESTADO) FROM controldeinventario.bienespatrimoniales D
+    #         WHERE D.ESTADO = 2
+    #     ) BAJA,
+    #     (
+    # 		SELECT COUNT(ESTADO) FROM controldeinventario.bienespatrimoniales F
+    #         WHERE F.UBICACION = 1
+    #     ) ALMACEN,
+    #     (
+    # 		SELECT COUNT(ESTADO) FROM controldeinventario.bienespatrimoniales F
+    #         WHERE F.UBICACION != 1
+    #     ) USO
+
+    # FROM controldeinventario.bienespatrimoniales A
+
+    try:
+        cursor = conexion.cursor()
+        cadena = "SELECT COUNT(A.ID) TOTAL, "
+        cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales B WHERE B.ESTADO = 1) OPERATIVO, "
+        cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales D WHERE D.ESTADO = 2) BAJA, "
+        cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales F WHERE F.UBICACION = 1) ALMACEN, "
+        cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales F WHERE F.UBICACION != 1) USO "
+        cadena += "FROM bienespatrimoniales A"
+
+        cursor.execute(cadena)
+        ranking = cursor.fetchone()
+        cursor.close()
+        return {
+            "TOTAL": ranking[0],
+            "OPERATIVO": ranking[1],
+            "BAJA": ranking[2],
+            "ALMACEN": ranking[3],
+            "USO": ranking[4]
+        }
+    except Exception as e:
+        return {
+            "TOTAL": 0,
+            "OPERATIVO": 0,
+            "BAJA": 0,
+            "ALMACEN": 0,
+            "USO": 0
+        }
 
 # **** DESPLAZAMIENTOS
 
@@ -257,11 +329,11 @@ def insertarDatosDesplazamiento(coleccion):
     except Exception as e:
         return "Error: {0}".format(e)
 
-def actualizarDatosDesplazamiento(id, base64):
+def actualizarDatosDesplazamiento(id, base64, nombre):
     # actualizar campo ACTAFIRMADA
     try:
         cursor = conexion.cursor()
-        cadena = "UPDATE datosdesplazamiento SET ACTAFIRMADA = '{0}' WHERE ID = {1}".format(base64, id)
+        cadena = "UPDATE datosdesplazamiento SET ACTAFIRMADA = '{0}', NOMBRE = '{1}' WHERE ID = {2}".format(base64, nombre, id)
         cursor.execute(cadena)
 
         conexion.commit()
@@ -332,12 +404,11 @@ def obtenerDatoDesplazamientoBien(id):
             "ESTADO": ""
         }
 
-
 def listarDatosDesplazamiento(top, codigo):
     try:
         cursor = conexion.cursor()
         cadena = "SELECT A.ID, A.FECHA, B.CODPATR, A.INTERNO, A.EXTERNO, A.DISPOSICION, A.MANTENIMIENTO, A.REASIGNACION, A.DUBIEN, A.DUABIEN,"
-        cadena += "A.DRBIEN, A.DRABIEN FROM datosdesplazamiento A INNER JOIN bienespatrimoniales B on B.ID = A.IDBIEN WHERE 1 = 1 "
+        cadena += "A.DRBIEN, A.DRABIEN, A.NOMBRE FROM datosdesplazamiento A INNER JOIN bienespatrimoniales B on B.ID = A.IDBIEN WHERE 1 = 1 "
         if not codigo in [None, ""]:
             codigo = codigo.strip().upper()
             cadena += " AND UPPER(B.CODPATR) LIKE '%{0}%'".format(codigo)
@@ -363,7 +434,8 @@ def listarDatosDesplazamiento(top, codigo):
                 "DUBIEN": dato[8],
                 "DUABIEN": dato[9],
                 "DRBIEN": dato[10],
-                "DRABIEN": dato[11]
+                "DRABIEN": dato[11],
+                "NOMBRE": dato[12]
             })
         cursor.close()
         return datos_dict
