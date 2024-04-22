@@ -131,7 +131,6 @@ def allBienesPatrimoniales(top, codigo, ubicacion):
         return bienes_dict
 
     except Exception as e:
-        print(e)
         return "Error: {0}".format(e)
 
 def obtenerBienPatrimonial(id):
@@ -243,11 +242,11 @@ def obtenerBien(id):
 def rankings():
     try:
         cursor = conexion.cursor()
-        cadena = "SELECT (SELECT COUNT(ESTADO) FROM bienespatrimoniales Z WHERE Z.CESTDO = 'A') TOTAL,  "
-        cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales B WHERE B.ESTADO = 1) OPERATIVO, "
-        cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales D WHERE D.ESTADO = 2) BAJA, "
-        cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales F WHERE F.UBICACION = 1) ALMACEN, "
-        cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales F WHERE F.UBICACION != 1) USO "
+        cadena = "SELECT (SELECT COUNT(Z.ID) FROM bienespatrimoniales Z WHERE Z.CESTDO = 'A') TOTAL,  "
+        cadena += "(SELECT COUNT(B.ID) FROM bienespatrimoniales B WHERE B.ESTADO = 1) OPERATIVO, "
+        cadena += "(SELECT COUNT(D.ID) FROM bienespatrimoniales D WHERE D.ESTADO = 2) BAJA, "
+        cadena += "(SELECT COUNT(F.ID) FROM bienespatrimoniales F WHERE F.UBICACION = 1) ALMACEN, "
+        cadena += "(SELECT COUNT(K.ID) FROM bienespatrimoniales K WHERE K.UBICACION != 1) USO "
         cadena += "FROM bienespatrimoniales A"
 
         cursor.execute(cadena)
@@ -261,6 +260,8 @@ def rankings():
             "USO": 0 if ranking[4] == None else ranking[4]
         }
     except Exception as e:
+        print(e)
+
         return {
             "TOTAL": 0,
             "OPERATIVO": 0,
@@ -391,7 +392,7 @@ def listarDatosDesplazamiento(top, codigo):
         cadena += "A.DRBIEN, A.DRABIEN, A.NOMBRE FROM datosdesplazamiento A INNER JOIN bienespatrimoniales B on B.ID = A.IDBIEN WHERE 1 = 1 "
         if not codigo in [None, ""]:
             codigo = codigo.strip().upper()
-            cadena += " AND UPPER(B.CODPATR) LIKE '%{0}%'".format(codigo)
+            cadena += " AND UPPER(B.ID) LIKE '%{0}%'".format(codigo)
 
         cadena += " ORDER BY A.ID ASC "
         if top > 0:
