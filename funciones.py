@@ -92,7 +92,7 @@ def allBienesPatrimoniales(top, codigo, ubicacion):
         cadena += "FROM bienespatrimoniales A "
         cadena += "LEFT JOIN estados_bienes B ON B.ID = A.ESTADO "
         cadena += "LEFT JOIN ubicaciones_bienes C ON C.ID = A.UBICACION "        
-        cadena += "WHERE 1=1 "
+        cadena += "WHERE 1=1 AND A.ESTADO IS NOT NULL"
 
         if not codigo in [None, ""]:
             cadena += "AND ID = {0} ".format(codigo)
@@ -109,21 +109,21 @@ def allBienesPatrimoniales(top, codigo, ubicacion):
         bienes_dict = []
         for bien in bienes:
             bienes_dict.append({
-                "ID": bien[0],
-                "CODPATR": bien[1],
-                "IDUSER": bien[2],
-                "DESCRIPCIONDELBIEN": bien[3],
-                "MARCA": bien[4],
-                "MODELO": bien[5],
-                "SERIE": bien[6],
-                "ESTADO": bien[7],
-                "UBICACION": bien[8],
-                "DETALLEUBICACION": bien[9],
-                "OBS": bien[10],
-                "INV2023": bien[11],
-                "INV2022": bien[12],
-                "INV2021": bien[13],
-                "INV2020": bien[14],
+                "ID": 0 if bien[0] == None else bien[0],
+                "CODPATR": "" if bien[1] == None else bien[1],
+                "IDUSER": "" if bien[2] == None else bien[2],
+                "DESCRIPCIONDELBIEN": "" if bien[3] == None else bien[3],
+                "MARCA": "" if bien[4] == None else bien[4],
+                "MODELO": "" if bien[5] == None else bien[5],
+                "SERIE": "" if bien[6] == None else bien[6],
+                "ESTADO": "" if bien[7] == None else bien[7],
+                "UBICACION": "" if bien[8] == None else bien[8],
+                "DETALLEUBICACION": "" if bien[9] == None else bien[9],
+                "OBS": "" if bien[10] == None else bien[10],
+                "INV2023": "" if bien[11] == None else bien[11],
+                "INV2022": "" if bien[12] == None else bien[12],
+                "INV2021": "" if bien[13] == None else bien[13],
+                "INV2020": "" if bien[14] == None else bien[14],
                 "CESTDO": "Activo" if bien[15] == "A" else "Inactivo"
         })
 
@@ -242,7 +242,7 @@ def obtenerBien(id):
 def rankings():
     try:
         cursor = conexion.cursor()
-        cadena = "(SELECT COUNT(ESTADO) FROM bienespatrimoniales Z WHERE Z.CESTDO = 'A') TOTAL,  "
+        cadena = "SELECT (SELECT COUNT(ESTADO) FROM bienespatrimoniales Z WHERE Z.CESTDO = 'A') TOTAL,  "
         cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales B WHERE B.ESTADO = 1) OPERATIVO, "
         cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales D WHERE D.ESTADO = 2) BAJA, "
         cadena += "(SELECT COUNT(ESTADO) FROM bienespatrimoniales F WHERE F.UBICACION = 1) ALMACEN, "
@@ -253,11 +253,11 @@ def rankings():
         ranking = cursor.fetchone()
         cursor.close()
         return {
-            "TOTAL": ranking[0],
-            "OPERATIVO": ranking[1],
-            "BAJA": ranking[2],
-            "ALMACEN": ranking[3],
-            "USO": ranking[4]
+            "TOTAL": 0 if ranking[0] == None else ranking[0],
+            "OPERATIVO": 0 if ranking[1] == None else ranking[1],
+            "BAJA": 0 if ranking[2] == None else ranking[2],
+            "ALMACEN": 0 if ranking[3] == None else ranking[3],
+            "USO": 0 if ranking[4] == None else ranking[4]
         }
     except Exception as e:
         return {
