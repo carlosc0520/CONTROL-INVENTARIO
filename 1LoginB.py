@@ -1350,6 +1350,12 @@ class DATOS_DESPLAZAMIENTO(object):
                     return
                 
 
+                # pregunar si desea generar o descargar
+                respuesta = QMessageBox.question(None, "Descargar", "¿Desea generar el archivo?", QMessageBox.Yes | QMessageBox.No)
+                if respuesta == QMessageBox.Yes:
+                    self.descargarPDF(id)
+                    return
+
                 # guardar archivo
                 filepath = filedialog.asksaveasfilename(defaultextension=".pdf", filetypes=[("PDF files", "*.pdf")])
                 if filepath:
