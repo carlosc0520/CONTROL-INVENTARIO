@@ -1254,7 +1254,7 @@ class DATOS_DESPLAZAMIENTO(object):
         self.usuario = usuario
         
         self.model = QtGui.QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["N°", "FECHA", "CGD. PATRIMONIAL", "INTERNO", "EXTERNO", "DISPOSICION", "MANTENIMIENTO", "REASIGNACION", "DATOS DEL USUARIO DEL BIEN", "ÁREA Y/O OFICINA DEL USUARIO DEL BIEN", "DATOS DEL RECEPTOR DEL BIEN", "ÁREA Y/O OFICINA DEL USUARIO RECEPTOR DEL BIEN", "DESCARGAR", "SUBIR"])
+        self.model.setHorizontalHeaderLabels(["N°", "FECHA", "CGD. PATRIMONIAL", "INTERNO", "EXTERNO", "DISPOSICION", "MANTENIMIENTO", "REASIGNACION", "DATOS DEL USUARIO DEL BIEN", "ÁREA Y/O OFICINA DEL USUARIO DEL BIEN", "DATOS DEL RECEPTOR DEL BIEN", "ÁREA Y/O OFICINA DEL USUARIO RECEPTOR DEL BIEN", "ACTA", "ACTA FIRMADA"])
         self.model.setHeaderData(0, QtCore.Qt.Horizontal, QtCore.Qt.AlignCenter, QtCore.Qt.TextAlignmentRole)
 
         self.tableView = UIElementsGenerator.create_table_view(WizardPage,QtCore.QRect(30, 210, 581, 201), self.model)
@@ -1332,7 +1332,7 @@ class DATOS_DESPLAZAMIENTO(object):
         if isinstance(resultado, list):
             # actualizar tabla
             self.model.clear()
-            self.model.setHorizontalHeaderLabels(["N°", "FECHA", "CGD. PATRIMONIAL", "INTERNO", "EXTERNO", "DISPOSICION", "MANTENIMIENTO", "REASIGNACION", "DATOS DEL USUARIO DEL BIEN", "ÁREA Y/O OFICINA DEL USUARIO DEL BIEN", "DATOS DEL RECEPTOR DEL BIEN", "ÁREA Y/O OFICINA DEL USUARIO RECEPTOR DEL BIEN", "DESCARGAR", "SUBIR"])
+            self.model.setHorizontalHeaderLabels(["N°", "FECHA", "CGD. PATRIMONIAL", "INTERNO", "EXTERNO", "DISPOSICION", "MANTENIMIENTO", "REASIGNACION", "DATOS DEL USUARIO DEL BIEN", "ÁREA Y/O OFICINA DEL USUARIO DEL BIEN", "DATOS DEL RECEPTOR DEL BIEN", "ÁREA Y/O OFICINA DEL USUARIO RECEPTOR DEL BIEN", "ACTA", "ACTA FIRMADA"])
             for bien in resultado:
                 row = []
                 for key_index, key in enumerate(bien):

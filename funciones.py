@@ -95,10 +95,10 @@ def allBienesPatrimoniales(top, codigo, ubicacion):
         cadena += "WHERE 1=1 AND A.ESTADO IS NOT NULL"
 
         if not codigo in [None, ""]:
-            cadena += "AND ID = {0} ".format(codigo)
+            cadena += " AND ID = {0} ".format(codigo)
         if not ubicacion in [None, ""]:
-            cadena += "AND UPPER(UBICACION) = '{0}' ".format(ubicacion.upper())
-        cadena += "ORDER BY ID ASC "
+            cadena += " AND UPPER(UBICACION) = '{0}' ".format(ubicacion.upper())
+        cadena += " ORDER BY ID ASC "
         if top > 0:
             cadena += "LIMIT {0}".format(top)
 
@@ -131,6 +131,7 @@ def allBienesPatrimoniales(top, codigo, ubicacion):
         return bienes_dict
 
     except Exception as e:
+        print(e)
         return "Error: {0}".format(e)
 
 def obtenerBienPatrimonial(id):
