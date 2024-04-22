@@ -428,7 +428,7 @@ class BIEN_PATRIMONIAL(object):
         self.label_6 = UIElementsGenerator.create_label(self.frame_2, QtCore.QRect(10, 10, 566, 20))
 
         self.lineEdit = UIElementsGenerator.create_line_edit(self.frame_2, QtCore.QRect(20, 30, 141, 20))
-        self.lineEdit.setValidator(QtGui.QIntValidator())
+        # self.lineEdit.setValidator(QtGui.QIntValidator())
         self.lineEdit_2 = UIElementsGenerator.create_line_edit(self.frame_2, QtCore.QRect(180, 30, 141, 20))
 
         self.pushButton_11 = UIElementsGenerator.create_push_button(self.frame_2, QtCore.QRect(340, 30, 75, 23), "Buscar", "background-color: rgb(85, 170, 0);color: white;")
