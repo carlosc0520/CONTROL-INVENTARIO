@@ -1,5 +1,6 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import mysql.connector
+import datetime
 
 # conexion BD
 conexion = mysql.connector.connect(
@@ -18,26 +19,61 @@ def listarUsuarios():
     return usuarios
 
 def ValidarUsuario(usuario, contrasena):
-    cursor = conexion.cursor()
+    usuario = usuario.strip().upper()
 
-    cursor.execute("SELECT * FROM usuarios WHERE NOMBREUSUARIO = %s", (usuario,))
-    usuario = cursor.fetchone()
-    cursor.close()
-    if(not usuario):
-        return -1
-    
-    if(usuario[4] != contrasena):
-        return -2
-    
-    return {
-        "ID": usuario[0],
-        "USUARIO": usuario[1],
-        "NOMBRE": usuario[2],
-        "DNI": usuario[3],
-        "EMAIL": usuario[5],
-        "ROL": usuario[6]
-    }
-    
+    try:
+        cursor = conexion.cursor()
+        cursor.execute(f"SELECT ID, NOMBREUSUARIO, NOMBRESYAPELLIDOS, DNI, PASSWORD, CORREOLABORAL, IDROL, IDCREADOR, INTENTOS, DATE_FORMAT(FBLOQUEO,'%d-%m-%Y %H:%i:%s') FROM usuarios WHERE UPPER(NOMBREUSUARIO) = '{usuario}'")
+        resultUsuario = cursor.fetchone()
+        cursor.close()
+
+        if not resultUsuario:
+            return -1  # Usuario no existe
+
+        if resultUsuario[9] is not None and resultUsuario[4] != contrasena:
+            return -4  # Usuario bloqueado
+
+        # Verificar contraseña (Asegúrate de almacenar las contraseñas de manera segura)
+        if resultUsuario[4] != contrasena:
+            cursor = conexion.cursor()
+            intentos = resultUsuario[8] if resultUsuario[8] is not None else 0
+
+            if intentos + 1 == 3:
+                cadena = f"UPDATE usuarios SET INTENTOS = (IFNULL(INTENTOS, 0) + 1), FBLOQUEO = NOW() WHERE ID = '{resultUsuario[0]}'"
+                cursor.execute(cadena)
+                cursor.close()
+                return -3  # Usuario bloqueado debido a demasiados intentos de inicio de sesión
+            
+            cadena = f"UPDATE usuarios SET INTENTOS =  (IFNULL(INTENTOS, 0) + 1) WHERE ID = '{resultUsuario[0]}'"
+            cursor.execute(cadena)
+            cursor.close()
+            return -2  # Contraseña incorrecta
+        
+        # La contraseña es correcta, verifica si el usuario todavía está en el período de bloqueo
+        if resultUsuario[9] is not None:
+            fecha_bloqueo = resultUsuario[9]
+            # convertir string a datetime
+            fecha_bloqueo = datetime.datetime.strptime(fecha_bloqueo, '%d-%m-%Y %H:%M:%S')
+            tiempo_transcurrido = datetime.datetime.now() - fecha_bloqueo
+
+            # unA HORA
+            if tiempo_transcurrido < datetime.timedelta(hours=1):
+                tiempo_restante = datetime.timedelta(hours=1) - tiempo_transcurrido
+                return f"Usuario bloqueado. Intente nuevamente en {tiempo_restante.total_seconds() // 60} minutos."
+
+        # Contraseña correcta, devuelve la información del usuario
+        return {
+            "ID": resultUsuario[0],
+            "USUARIO": resultUsuario[1],
+            "NOMBRE": resultUsuario[2],
+            "DNI": resultUsuario[3],
+            "EMAIL": resultUsuario[5],
+            "ROL": resultUsuario[6]
+        }
+
+    except Exception as e:
+        return -4
+
 def addUsuario(coleccion):
     try:
         # validar que nombre de usuario no exista
@@ -95,9 +131,9 @@ def allBienesPatrimoniales(top, codigo, ubicacion):
         cadena += "WHERE 1=1 AND A.ESTADO IS NOT NULL"
 
         if not codigo in [None, ""]:
-            cadena += " AND ID = {0} ".format(codigo)
+            cadena += " AND A.CODPATR LIKE '%{0}%' ".format(codigo)
         if not ubicacion in [None, ""]:
-            cadena += " AND UPPER(UBICACION) = '{0}' ".format(ubicacion.upper())
+            cadena += " AND UPPER(C.DESCRIPCION) LIKE '%{0}%' ".format(ubicacion.upper())
         cadena += " ORDER BY ID ASC "
         if top > 0:
             cadena += "LIMIT {0}".format(top)
@@ -248,7 +284,7 @@ def rankings():
             SUM(CASE WHEN A.ESTADO = 1 THEN 1 ELSE 0 END) AS OPERATIVO,
             SUM(CASE WHEN A.ESTADO = 2 THEN 1 ELSE 0 END) AS BAJA,
             SUM(CASE WHEN A.UBICACION = 1 THEN 1 ELSE 0 END) AS ALMACEN,
-            SUM(CASE WHEN A.UBICACION != 1 THEN 1 ELSE 0 END) AS USO
+            SUM(CASE WHEN A.UBICACION != 1 AND A.CESTDO = 'A' THEN 1 ELSE 0 END) AS USO
         FROM 
             bienespatrimoniales A
         """
@@ -264,7 +300,6 @@ def rankings():
             "USO": 0 if ranking[4] == None else ranking[4]
         }
     except Exception as e:
-        print(e)
 
         return {
             "TOTAL": 0,
@@ -396,7 +431,7 @@ def listarDatosDesplazamiento(top, codigo):
         cadena += "A.DRBIEN, A.DRABIEN, A.NOMBRE FROM datosdesplazamiento A INNER JOIN bienespatrimoniales B on B.ID = A.IDBIEN WHERE 1 = 1 "
         if not codigo in [None, ""]:
             codigo = codigo.strip().upper()
-            cadena += " AND UPPER(B.ID) LIKE '%{0}%'".format(codigo)
+            cadena += " AND A.ID = '{0}'".format(codigo)
 
         cadena += " ORDER BY A.ID ASC "
         if top > 0:

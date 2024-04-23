@@ -169,6 +169,18 @@ class Login(object):
             QMessageBox.warning(None, "Error", "La contraseña es incorrecta")
             return
         
+        if(usuario == -3):
+            QMessageBox.warning(None, "Error", "El usuario esta deshabilitado")
+            return
+        
+        if(isinstance(usuario, str)):
+            QMessageBox.warning(None, "Error", usuario)
+            return
+
+        if(usuario == -4):
+            QMessageBox.warning(None, "Error", "Usuario bloqueado.")
+            return
+        
     
         QMessageBox.information(None, "Bienvenido", "El usuario y contraseña son correctos")
         self.openInicio(usuario)
@@ -398,9 +410,14 @@ class BIEN_PATRIMONIAL(object):
         WizardPage.resize(634, 482)
         self.usuario = usuario
         self.WizardPage = WizardPage
-        
+        print(self.usuario)
         self.model = QtGui.QStandardItemModel()
-        self.model.setHorizontalHeaderLabels(["ID", "COD.", "DESCRIPCIÓN", "MARCA", "MODELO", "SERIE", "ESTADO", "UBICACION", "DETALLE UBI.", "OBS", "INV 2023", "INV 2022", "INV 2021", "INV 2020", "ESTADO R." "EDITAR", "ELIMINAR"])
+
+        arrayModel = ["ID", "COD.", "DESCRIPCIÓN", "MARCA", "MODELO", "SERIE", "ESTADO", "UBICACION", "DETALLE UBI.", "OBS", "INV 2023", "INV 2022", "INV 2021", "INV 2020", "ESTADO R.", "EDITAR"]
+        if(self.usuario["ROL"] == 1):
+            arrayModel.append("ELIMINAR")
+
+        self.model.setHorizontalHeaderLabels(arrayModel)
         self.model.setHeaderData(0, QtCore.Qt.Horizontal, QtCore.Qt.AlignCenter, QtCore.Qt.TextAlignmentRole)
 
         self.tableView = UIElementsGenerator.create_table_view(WizardPage, QtCore.QRect(30, 220, 581, 201), self.model)
@@ -487,7 +504,11 @@ class BIEN_PATRIMONIAL(object):
         if isinstance(resultado, list):
             # actualizar tabla
             self.model.clear()
-            self.model.setHorizontalHeaderLabels(["ID", "COD.", "DESCRIPCIÓN", "MARCA", "MODELO", "SERIE", "ESTADO", "UBICACION", "DETALLE UBI.", "OBS", "INV 2023", "INV 2022", "INV 2021", "INV 2020", "ESTADO R.", "EDITAR", "ELIMINAR"])
+            arrayModel = ["ID", "COD.", "DESCRIPCIÓN", "MARCA", "MODELO", "SERIE", "ESTADO", "UBICACION", "DETALLE UBI.", "OBS", "INV 2023", "INV 2022", "INV 2021", "INV 2020", "ESTADO R.", "EDITAR"]
+            if(self.usuario["ROL"] == 1):
+                arrayModel.append("ELIMINAR")
+
+            self.model.setHorizontalHeaderLabels(arrayModel)
             for bien in resultado:
                 row = []
                 for key_index, key in enumerate(bien):
@@ -511,14 +532,15 @@ class BIEN_PATRIMONIAL(object):
                 edit_item.setTextAlignment(QtCore.Qt.AlignCenter)
                 edit_item.setFlags(QtCore.Qt.ItemIsEnabled)
                 row.append(edit_item)
-
-                # AGREGAR IMAGEN ELIMINAR
-                delete_icon = QIcon(QPixmap("total.jpeg"))
-                delete_item = QtGui.QStandardItem()
-                delete_item.setIcon(delete_icon)
-                delete_item.setTextAlignment(QtCore.Qt.AlignCenter)
-                delete_item.setFlags(QtCore.Qt.ItemIsEnabled)
-                row.append(delete_item)
+                
+                if(self.usuario["ROL"] == 1):
+                    # AGREGAR IMAGEN ELIMINAR
+                    delete_icon = QIcon(QPixmap("total.jpeg"))
+                    delete_item = QtGui.QStandardItem()
+                    delete_item.setIcon(delete_icon)
+                    delete_item.setTextAlignment(QtCore.Qt.AlignCenter)
+                    delete_item.setFlags(QtCore.Qt.ItemIsEnabled)
+                    row.append(delete_item)
 
                 self.model.appendRow(row)
 
@@ -1152,7 +1174,6 @@ class FORM_AUTORIZACION(object):
         self.lineEdit_6.clear()
         self.comboBox.setCurrentIndex(0)
 
-
     def guardarAutorizacion(self):
         interno = self.checkBox.isChecked()
         externo = self.checkBox_2.isChecked()
@@ -1172,7 +1193,7 @@ class FORM_AUTORIZACION(object):
             return
 
         # validas que todos los text no esten vacios
-        line_edits = [self.lineEdit_11, self.lineEdit_8, self.lineEdit_7, self.lineEdit_6, self.lineEdit_12, self.lineEdit_13, self.lineEdit_14, self.lineEdit_15]
+        line_edits = [self.lineEdit_12, self.lineEdit_13, self.lineEdit_14, self.lineEdit_15]
         valores = [edit.text().strip() for edit in line_edits]
 
         for edit, valor in zip(line_edits, valores):
